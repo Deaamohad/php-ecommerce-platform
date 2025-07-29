@@ -1,0 +1,9 @@
+backup.txt
+.DS_Store
+Thumbs.db
+.env
+vendor/
+.idea/
+.vscode/
+*.log
+*.swp
