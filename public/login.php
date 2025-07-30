@@ -1,7 +1,9 @@
 <?php
 session_start();
 require "../includes/auth.php";
+require "../includes/csrf.php";
 redirectIfLoggedIn(); 
+$csrf_token = generateCSRFToken();
 ?>
 
 <!DOCTYPE html>
@@ -40,8 +42,9 @@ redirectIfLoggedIn();
     <form action="../src/process_login.php" method="POST">
         <input type="text" name="username" placeholder="username" required>
         <input type="password" name="password" placeholder="password" required>
+        <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
         <button type="submit">Login</button>
-        <a id="register-button" style="font-size: 14px; color: blue; text-decoration: 0;  margin-left: 30px" href="register.php">Don't have an account?</a>
+        <a id="register-button" style="font-size: 14px; color: blue; text-decoration: 0;  margin-left: 30px" href="register">Don't have an account?</a>
     </form>
 </body>
 </html>

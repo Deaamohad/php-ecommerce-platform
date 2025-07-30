@@ -3,7 +3,9 @@
 
 session_start();
 require "../includes/auth.php";
+require "../includes/csrf.php";
 redirectIfLoggedIn();
+$csrf_token = generateCSRFToken();
 ?>
 
 <!DOCTYPE html>
@@ -43,8 +45,9 @@ redirectIfLoggedIn();
         <input type="text" name="username" placeholder="username" required>
         <input type="password" name="password" placeholder="password" required>
         <input type="password" name="confirm-password" placeholder="confirm password" required>
+        <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
         <button type="submit">Register</button>
-        <a id="login-button" style="font-size: 14px; color: blue; text-decoration: 0;  margin-left: 22px" href="login.php">Already have an account?</a>
+        <a id="login-button" style="font-size: 14px; color: blue; text-decoration: 0;  margin-left: 22px" href="login">Already have an account?</a>
     </form>
 
 </body>
