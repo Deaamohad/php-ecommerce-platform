@@ -50,14 +50,13 @@ if ($stmt->rowCount() > 0) {
     header("Location: ../public/register?user-exists");
     exit();
 } else {
-    $stmt = $pdo->prepare("INSERT INTO users (username, password) VALUES (?, ?)");
+    $stmt = $pdo->prepare("INSERT INTO users (username, hashed_password) VALUES (?, ?)");
     $stmt->execute([$username, $hashed_password]);
     
     $user_id = $pdo->lastInsertId();
     $_SESSION['user_id'] = $user_id;
     $_SESSION['username'] = $username;
-    
+    $_SESSION['last_activity'] = time();
     regenerateCSRFToken();
-    
     header("Location: ../public/dashboard");
 }
