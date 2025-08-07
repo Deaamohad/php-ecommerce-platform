@@ -36,7 +36,6 @@ if (!hash_equals($_POST['password'], $_POST['confirm-password'])) {
     exit();
 }
 
-
 $username = $_POST["username"];
 $password = $_POST["password"];
 $confirmPassword = $_POST["confirm-password"];
@@ -47,16 +46,13 @@ $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ?");
 $stmt->execute([$username]);
 
 if ($stmt->rowCount() > 0) {
-    header("Location: ../public/register?user-exists");
+    header("Location: ../public/register?error=user-exists");
     exit();
 } else {
     $stmt = $pdo->prepare("INSERT INTO users (username, hashed_password) VALUES (?, ?)");
     $stmt->execute([$username, $hashed_password]);
     
-    $user_id = $pdo->lastInsertId();
-    $_SESSION['user_id'] = $user_id;
-    $_SESSION['username'] = $username;
-    $_SESSION['last_activity'] = time();
-    regenerateCSRFToken();
-    header("Location: ../public/dashboard");
+    header("Location: ../public/login?success=registration-complete");
+    exit();
 }
+?>

@@ -1,9 +1,9 @@
 <?php
 
-
 session_start();
 require "../includes/auth.php";
 require "../includes/csrf.php";
+require "../includes/messages.php";
 redirectIfLoggedIn();
 $csrf_token = generateCSRFToken();
 ?>
@@ -14,40 +14,27 @@ $csrf_token = generateCSRFToken();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
-    <style>
-        body {
-            padding: 0;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        input {
-            display: block;
-            margin: 15px 0 0 0;
-            padding: 6px 20px;
-
-        }
-        button {
-            display: inline-block;
-            margin: 15px 0 0 0;
-            padding: 5px 10px;
-        }
-        #login-button:hover {
-            text-decoration: solid;
-            color: cyan;
-        }
-    </style>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <form action="../src/process_register.php" method="POST">
-        <input type="text" name="username" placeholder="username" required>
-        <input type="password" name="password" placeholder="password" required>
-        <input type="password" name="confirm-password" placeholder="confirm password" required>
+        <h1 class="form-title">Create Account</h1>
+        <p class="form-subtitle">Join us today</p>
+        
+        <?php if (isset($_GET['error'])) : ?>
+        <div class="error"><p><?php echo getErrorMessage($_GET['error']); ?></p></div>
+        <?php endif; ?>
+        
+        <?php if (isset($_GET['success'])) : ?>
+        <div class="success"><p><?php echo getSuccessMessage($_GET['success']); ?></p></div>
+        <?php endif; ?>
+        
+        <input type="text" name="username" placeholder="Username" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <input type="password" name="confirm-password" placeholder="Confirm Password" required>
         <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
         <button type="submit">Register</button>
-        <a id="login-button" style="font-size: 14px; color: blue; text-decoration: 0;  margin-left: 22px" href="login">Already have an account?</a>
+        <a id="login-button" href="login">Already have an account?</a>
     </form>
 
 </body>

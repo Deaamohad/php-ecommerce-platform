@@ -37,14 +37,14 @@ $stmt->execute([$username]);
 
 if ($stmt->rowCount() == 0) {
     recordFailedAttempt(getUserIP(), $pdo);
-    header("Location: ../public/login?invalid-credentials");
+    header("Location: ../public/login?error=invalid-credentials");
     exit();
 
 } else {
     $user = $stmt->fetch();
     if (!password_verify($password, $user['hashed_password'])) {
         recordFailedAttempt(getUserIP(), $pdo);
-        header("Location: ../public/login?invalid-credentials");
+        header("Location: ../public/login?error=invalid-credentials");
         exit();
     } else {
         $_SESSION['user_id'] = $user['id'];

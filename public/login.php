@@ -2,6 +2,7 @@
 session_start();
 require "../includes/auth.php";
 require "../includes/csrf.php";
+require "../includes/messages.php";
 redirectIfLoggedIn(); 
 $csrf_token = generateCSRFToken();
 ?>
@@ -11,40 +12,28 @@ $csrf_token = generateCSRFToken();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/style.css">
     <title>Login</title>
-    <style>
-        body {
-            padding: 0;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        input {
-            display: block;
-            margin: 15px 0 0 0;
-            padding: 6px 20px;
-
-        }
-        button {
-            display: inline-block;
-            margin: 15px 0 0 0;
-            padding: 5px 10px;
-        }
-        #register-button:hover {
-            text-decoration: solid;
-            color: cyan;
-        }
-    </style>
 </head>
 <body>
     <form action="../src/process_login.php" method="POST">
-        <input type="text" name="username" placeholder="username" required>
-        <input type="password" name="password" placeholder="password" required>
+        <h1 class="form-title">Welcome Back</h1>
+        <p class="form-subtitle">Sign in to your account</p>
+        
+        <?php if (isset($_GET['error'])) : ?>
+        <div class="error"><p><?php echo getErrorMessage($_GET['error']); ?></p></div>
+        <?php endif; ?>
+        
+        <?php if (isset($_GET['success'])) : ?>
+        <div class="success"><p><?php echo getSuccessMessage($_GET['success']); ?></p></div>
+        <?php endif; ?>
+        
+        <input type="text" name="username" placeholder="Username" required>
+        <input type="password" name="password" placeholder="Password" required>
         <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
-        <button type="submit">Login</button>
-        <a id="register-button" style="font-size: 14px; color: blue; text-decoration: 0;  margin-left: 30px" href="register">Don't have an account?</a>
+        <button type="submit">Sign In</button>
+        <a id="register-button" href="register">Don't have an account?</a>
     </form>
+
 </body>
 </html>
