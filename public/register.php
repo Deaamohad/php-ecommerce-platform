@@ -14,7 +14,7 @@ $csrf_token = generateCSRFToken();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/login-register.css">
 </head>
 <body>
     <form action="../src/process_register.php" method="POST">
