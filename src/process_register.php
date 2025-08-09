@@ -2,9 +2,9 @@
 
 session_start();
 
-require "../includes/db.php";
-require "../includes/csrf.php";
-require "../includes/validation.php";
+require_once "../includes/db.php";
+require_once "../includes/csrf.php";
+require_once "../includes/validation.php";
 
 if (!validateCSRFToken($_POST['csrf_token'])) {
     header("Location: ../public/register?error=csrf-token-invalid");

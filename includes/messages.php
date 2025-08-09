@@ -19,7 +19,15 @@ function getErrorMessage($error) {
 		"password-too-short" => "New password must be at least 8 characters long.",
 		"passwords-dont-match" => "New and confirm passwords do not match.",
 		"same-password" => "New password must be different from current password.",
-		"update-failed" => "Update failed. Please try again."
+		"update-failed" => "Update failed. Please try again.",
+		"invalid-price" => "Price must be greater than 0.",
+		"invalid-stock" => "Stock quantity cannot be negative.",
+		"invalid-category" => "Please select a valid category.",
+		"invalid-name" => "Product name must be between 2 and 100 characters.",
+		"invalid-image-url" => "Please provide a valid image URL ending in .jpg, .png, .gif, or .webp.",
+		"image-upload-failed" => "Image upload failed. Please try again or use a URL instead.",
+		"image-processing-unavailable" => "Image processing not available. Please use image URLs instead or enable GD extension.",
+		"database-error" => "Database error. Please try again."
 	];
 
 	return isset($error_messages[$error]) ? $error_messages[$error] : "An error occurred. Please try again.";
@@ -30,7 +38,8 @@ function getSuccessMessage($success) {
 		"registration-complete" => "Account created successfully! You can now login.",
 		"username-updated" => "Username updated successfully!",
 		"password-changed" => "Password changed successfully!",
-		"logout-success" => "You have been logged out successfully."
+		"logout-success" => "You have been logged out successfully.",
+		"product-added" => "Product added successfully!"
 	];
 
 	return isset($success_messages[$success]) ? $success_messages[$success] : "Success!";

@@ -13,29 +13,53 @@ $csrf_token = generateCSRFToken();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register</title>
     <link rel="stylesheet" href="css/login-register.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <title>Register</title>
 </head>
 <body>
-    <form action="../src/process_register.php" method="POST">
-        <h1 class="form-title">Create Account</h1>
-        <p class="form-subtitle">Join us today</p>
+    <div class="form-container">
+        <h1><i class="bi bi-person-plus"></i> Create Account</h1>
         
         <?php if (isset($_GET['error'])) : ?>
-        <div class="error"><p><?php echo getErrorMessage($_GET['error']); ?></p></div>
+            <div class="error-message">
+                <i class="bi bi-exclamation-circle"></i>
+                <?php echo getErrorMessage($_GET['error']); ?>
+            </div>
         <?php endif; ?>
         
         <?php if (isset($_GET['success'])) : ?>
-        <div class="success"><p><?php echo getSuccessMessage($_GET['success']); ?></p></div>
+            <div class="success-message">
+                <i class="bi bi-check-circle"></i>
+                <?php echo getSuccessMessage($_GET['success']); ?>
+            </div>
         <?php endif; ?>
         
-        <input type="text" name="username" placeholder="Username" required>
-        <input type="password" name="password" placeholder="Password" required>
-        <input type="password" name="confirm-password" placeholder="Confirm Password" required>
-        <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
-        <button type="submit">Register</button>
-        <a id="login-button" href="login">Already have an account?</a>
-    </form>
-
+        <form action="../src/process_register.php" method="POST">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" placeholder="Choose a username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Create a password" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="confirm-password">Confirm Password</label>
+                <input type="password" id="confirm-password" name="confirm-password" placeholder="Confirm your password" required>
+            </div>
+            
+            <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+            <button type="submit" class="submit-btn">
+                <i class="bi bi-person-check"></i> Create Account
+            </button>
+        </form>
+        
+        <div class="login-link">
+            Already have an account? <a href="login">Sign in here</a>
+        </div>
+    </div>
 </body>
 </html>

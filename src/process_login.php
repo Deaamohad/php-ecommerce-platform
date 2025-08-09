@@ -2,9 +2,9 @@
 
 session_start();
 
-require "../includes/db.php";
-require "../includes/csrf.php";
-require "../includes/rate_limiting.php";
+require_once "../includes/db.php";
+require_once "../includes/csrf.php";
+require_once "../includes/rate_limiting.php";
 
 if (isIpBlocked(getUserIP(), $pdo)) {
     header("Location: ../public/login?error=too-many-requests");
@@ -50,9 +50,10 @@ if ($stmt->rowCount() == 0) {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
         $_SESSION['last_activity'] = time();
+        $_SESSION['is_admin'] = $user['is_admin'];
         regenerateCSRFToken();
         resetAttempts(getUserIP(), $pdo);
-        header("Location: ../public/dashboard");
+        header("Location: ../public/products");
         exit();
     }
 }

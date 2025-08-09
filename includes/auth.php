@@ -18,7 +18,14 @@ function requireLogin() {
 
 function redirectIfLoggedIn() {
     if (isset($_SESSION['user_id'])) {
-        header("Location: dashboard");
+        header("Location: products");
+        exit();
+    }
+}
+
+function requireAdmin() {
+    if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] != 1) {    
+        header("Location: ../public/login");
         exit();
     }
 }
