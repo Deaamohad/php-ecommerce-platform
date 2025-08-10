@@ -1,0 +1,11 @@
+<Files "*.php">
+    Deny from all
+</Files>
+
+<Files "*.exe">
+    Deny from all
+</Files>
+
+<Files "*.bat">
+    Deny from all
+</Files>

@@ -45,13 +45,6 @@ $csrf_token = generateCSRFToken();
                 <input type="password" id="password" name="password" placeholder="Enter your password" required>
             </div>
             
-            <div class="form-group">
-                <label style="display: flex; align-items: center; gap: 8px; font-weight: normal;">
-                    <input type="checkbox" name="remember_me" id="remember" style="width: auto;">
-                    Remember me for 30 days
-                </label>
-            </div>
-            
             <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
             <button type="submit" class="submit-btn">
                 <i class="bi bi-box-arrow-in-right"></i> Sign In
@@ -59,7 +52,7 @@ $csrf_token = generateCSRFToken();
         </form>
         
         <div class="register-link">
-            Don't have an account? <a href="register">Sign up here</a>
+                            Don't have an account? <a href="register">Sign up here</a>
         </div>
     </div>
 </body>

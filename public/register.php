@@ -42,6 +42,11 @@ $csrf_token = generateCSRFToken();
             </div>
             
             <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="Enter your email" required>
+            </div>
+            
+            <div class="form-group">
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" placeholder="Create a password" required>
             </div>
@@ -58,7 +63,7 @@ $csrf_token = generateCSRFToken();
         </form>
         
         <div class="login-link">
-            Already have an account? <a href="login">Sign in here</a>
+                            Already have an account? <a href="login">Sign in here</a>
         </div>
     </div>
 </body>

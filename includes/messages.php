@@ -4,13 +4,17 @@ function getErrorMessage($error) {
 	$error_messages = [
 		"invalid-credentials" => "Invalid username or password",
 		"empty-fields" => "Please fill in all fields",
+		"empty-required-fields" => "Please fill in all required fields (username and email)",
+		"missing_fields" => "Please fill in all required fields.",
 		"missing-data" => "Missing required data",
 		"csrf-token-invalid" => "Security token invalid. Please try again.",
 		"too-many-requests" => "Too many failed attempts. Please try again later.",
 		"user-exists" => "Username already exists",
+		"email-exists" => "Email already exists",
 		"password-mismatch" => "Passwords do not match",
 		"invalid-password" => "Invalid username or password",
 		"invalid-username" => "Invalid username format",
+		"invalid-email" => "Please enter a valid email address",
 		"session-timed-out" => "Your session has expired. Please login again.",
 		"please-login" => "Please login to access this page",
 		"username-already-exists" => "Username already exists. Please choose another.",
@@ -27,7 +31,12 @@ function getErrorMessage($error) {
 		"invalid-image-url" => "Please provide a valid image URL ending in .jpg, .png, .gif, or .webp.",
 		"image-upload-failed" => "Image upload failed. Please try again or use a URL instead.",
 		"image-processing-unavailable" => "Image processing not available. Please use image URLs instead or enable GD extension.",
-		"database-error" => "Database error. Please try again."
+		"database-error" => "Database error. Please try again.",
+		"invalid_token" => "Security token invalid. Please try again.",
+		"invalid_product" => "Invalid product selected.",
+		"product_not_found" => "Product not found.",
+		"delete_failed" => "Failed to delete product. Please try again.",
+		"update_failed" => "Failed to update product. Please try again."
 	];
 
 	return isset($error_messages[$error]) ? $error_messages[$error] : "An error occurred. Please try again.";
@@ -38,8 +47,12 @@ function getSuccessMessage($success) {
 		"registration-complete" => "Account created successfully! You can now login.",
 		"username-updated" => "Username updated successfully!",
 		"password-changed" => "Password changed successfully!",
+		"profile-updated" => "Profile updated successfully!",
 		"logout-success" => "You have been logged out successfully.",
-		"product-added" => "Product added successfully!"
+		"logged-out" => "You have been logged out successfully.",
+		"product-added" => "Product added successfully!",
+		"product-updated" => "Product updated successfully!",
+		"product_deleted" => "Product deleted successfully!"
 	];
 
 	return isset($success_messages[$success]) ? $success_messages[$success] : "Success!";

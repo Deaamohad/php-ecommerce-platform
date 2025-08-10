@@ -11,6 +11,24 @@ body {
     line-height: 1.6;
 }
 
+.bi {
+    display: inline-block;
+    vertical-align: middle;
+    line-height: 1;
+    font-style: normal;
+    font-variant: normal;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+}
+
+.bi::before {
+    display: inline-block;
+    font-style: normal;
+    font-variant: normal;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+}
+
 .site-header {
     background: #1e293b;
     border-bottom: 1px solid #334155;
@@ -87,12 +105,12 @@ body {
 }
 
 .main-nav a.admin {
-    background: #7c3aed;
+    background: #3b82f6;
     color: white;
 }
 
 .main-nav a.admin:hover {
-    background: #6d28d9;
+    background: #2563eb;
 }
 
 .user-info {
@@ -103,6 +121,55 @@ body {
     gap: 6px;
 }
 
+.cart-nav {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.cart-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #ef4444;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.cart-nav a {
+    color: #cbd5e1;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+}
+
+.cart-nav a:hover {
+    background: #334155;
+    color: #f1f5f9;
+}
+
 .btn {
     display: inline-flex;
     align-items: center;
@@ -110,6 +177,7 @@ body {
     padding: 10px 20px;
     border: none;
     border-radius: 6px;
+    font-size: 14px;
     font-weight: 500;
     text-decoration: none;
     cursor: pointer;

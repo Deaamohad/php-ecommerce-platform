@@ -1,8 +1,10 @@
--- Run this file to populate the categories table with common product categories
+-- This file contains initial category data for the e-commerce system
+-- Provides a starting set of product categories for better organization
 
 USE ecommerce_system;
 
--- Insert sample categories
+-- Insert sample product categories
+-- These categories cover common e-commerce product types
 INSERT INTO categories (name) VALUES 
 ('Electronics'),
 ('Clothing'),
@@ -20,5 +22,4 @@ INSERT INTO categories (name) VALUES
 ('Jewelry & Accessories'),
 ('Art & Crafts');
 
--- Display inserted categories
 SELECT * FROM categories ORDER BY name;

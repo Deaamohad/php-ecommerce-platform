@@ -1,40 +1,64 @@
-# PHP Login System
+# PHP E-Commerce Platform
 
-A secure login system built with PHP and MySQL.
+A complete e-commerce website I built using PHP and MySQL. Started as a simple login system but grew into a full shopping platform with cart functionality and admin features.
 
-## Features
+## What it does
 
-- User registration and login
-- Password hashing and verification
-- CSRF protection
-- Rate limiting for failed attempts
-- User profile management
-- Clean, responsive design
+- Users can register, login, and manage their profiles
+- Browse products with search and price filtering
+- Add items to cart and manage quantities
+- Admins can add, edit, and delete products
+- Secure authentication with proper password hashing
+- Responsive design that works on mobile
 
-## Setup
+## Tech Stack
 
-1. Import the database schema:
-   ```bash
-   mysql -u root -p < database/schema.sql
+- **PHP** - Backend logic and user authentication
+- **MySQL** - Database for users, products, and cart data
+- **CSS/HTML** - Frontend styling with responsive design
+- **Bootstrap Icons** - For clean UI icons
+
+## Getting Started
+
+1. **Database Setup**
+   ```sql
+   CREATE DATABASE ecommerce;
+   USE ecommerce;
    ```
-2. Update database credentials in `includes/db.php`
+   Then import `database/schema.sql`
 
-3. Start your web server and navigate to the project
+2. **Configuration**
+   - Update database credentials in `includes/db.php`
+   - Make sure you have PHP and MySQL running
 
-## Security Features
+3. **Access the site**
+   - Put files in your web server directory
+   - Visit `localhost/project/public/`
 
-- Passwords are hashed using PHP's `password_hash()`
-- CSRF tokens protect against cross-site attacks
-- Rate limiting prevents brute force attacks
-- All database queries use prepared statements
+## Features I'm proud of
+
+- **Security**: CSRF protection, prepared statements, rate limiting
+- **User Experience**: Clean interface, error messages, success feedback
+- **Admin Panel**: Full product management with image uploads
+- **Shopping Cart**: Persistent cart that remembers items between sessions
+- **Profile System**: Comprehensive user account management
 
 ## File Structure
 
-- `public/` - Web pages (login, register, dashboard, profile)
-- `src/` - Processing scripts
-- `includes/` - Shared code and database connection
-- `database/` - SQL schema
+```
+public/          # Main website pages
+src/             # Form processing scripts
+includes/        # Classes and shared functions
+database/        # SQL files for setup
+```
 
----
+## What I learned
 
-This project demonstrates secure authentication practices and clean PHP code structure.
+This project taught me a lot about:
+- Building secure PHP applications
+- Database design and relationships
+- Creating responsive user interfaces
+- Handling user sessions and authentication
+- Object-oriented programming in PHP
+
+Perfect for demonstrating full-stack development skills!

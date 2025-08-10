@@ -2,12 +2,19 @@
 session_start();
 require_once "../includes/db.php";
 require_once "../includes/Product.php";
+require_once "../includes/Cart.php";
 
 $product = new Product($pdo);
 $products = $product->getAllProducts();
 
 $stmt = $pdo->query("SELECT * FROM categories ORDER BY name");
 $categories = $stmt->fetchAll();
+
+$cartCount = 0;
+if (isset($_SESSION['user_id'])) {
+    $cart = new Cart($pdo);
+    $cartCount = $cart->getCartCount($_SESSION['user_id']);
+}
 ?>
 
 <!DOCTYPE html>
@@ -34,6 +41,16 @@ $categories = $stmt->fetchAll();
                 <nav class="main-nav">
                     <?php if (isset($_SESSION['user_id'])): ?>
                         <span class="user-info"><i class="bi bi-person-circle"></i> <?php echo htmlspecialchars($_SESSION['username']); ?></span>
+                        
+                        <div class="cart-nav">
+                            <a href="cart">
+                                <i class="bi bi-cart"></i> Cart
+                                <?php if ($cartCount > 0): ?>
+                                    <span class="cart-badge"><?php echo $cartCount; ?></span>
+                                <?php endif; ?>
+                            </a>
+                        </div>
+                        
                         <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']): ?>
                             <a href="admin" class="admin"><i class="bi bi-gear"></i> Admin</a>
                         <?php endif; ?>
@@ -51,7 +68,6 @@ $categories = $stmt->fetchAll();
     <div class="container">
         <main>
             <div class="main-content">
-                <!-- Filter Sidebar -->
                 <aside class="filter-sidebar">
                     <h3><i class="bi bi-funnel"></i> Filters</h3>
                     
@@ -90,10 +106,15 @@ $categories = $stmt->fetchAll();
                     </button>
                 </aside>
                 
-                <!-- Products Section -->
                 <section class="products-section">
                     <div class="section-header">
                         <h2>Our Products</h2>
+                        <?php if (isset($_GET['added']) && $_GET['added'] == '1'): ?>
+                            <div style="background: #10b981; color: white; padding: 10px 15px; border-radius: 6px; margin: 10px 0; display: flex; align-items: center; gap: 8px;">
+                                <i class="bi bi-check-circle"></i>
+                                <span>Product added to cart successfully!</span>
+                            </div>
+                        <?php endif; ?>
                         <p id="productCount">Discover amazing products at great prices</p>
                     </div>
                     
@@ -101,7 +122,7 @@ $categories = $stmt->fetchAll();
                         <div class="no-products">
                             <p>No products available yet.</p>
                             <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1): ?>
-                                <a href="admin.php" class="cta-button">Add Products</a>
+                                <a href="admin" class="cta-button">Add Products</a>
                             <?php else: ?>
                                 <p>Check back soon for new items!</p>
                             <?php endif; ?>
@@ -136,11 +157,14 @@ $categories = $stmt->fetchAll();
                                         
                                         <?php if ($prod['stock_quantity'] > 0): ?>
                                             <?php if (isset($_SESSION['user_id'])): ?>
-                                                <button class="add-to-cart-btn" data-product-id="<?php echo $prod['id']; ?>">
-                                                    <i class="bi bi-cart-plus"></i> Add to Cart
-                                                </button>
+                                                <form method="POST" action="../src/add_to_cart.php" style="display: inline;">
+                                                    <input type="hidden" name="product_id" value="<?php echo $prod['id']; ?>">
+                                                    <button type="submit" class="add-to-cart-btn">
+                                                        <i class="bi bi-cart-plus"></i> Add to Cart
+                                                    </button>
+                                                </form>
                                             <?php else: ?>
-                                                <a href="login.php" class="login-to-buy-btn">Login to Buy</a>
+                                                <a href="login" class="login-to-buy-btn">Login to Buy</a>
                                             <?php endif; ?>
                                         <?php else: ?>
                                             <button class="out-of-stock-btn" disabled>Out of Stock</button>
@@ -228,22 +252,11 @@ $categories = $stmt->fetchAll();
             filterProducts();
         }
 
-        function addToCart(productId) {
-            alert(`Product ${productId} added to cart! (Cart functionality coming soon)`);
-        }
-
         searchInput.addEventListener('input', filterProducts);
         categoryFilter.addEventListener('change', filterProducts);
         minPrice.addEventListener('input', filterProducts);
         maxPrice.addEventListener('input', filterProducts);
         stockFilter.addEventListener('change', filterProducts);
-
-        document.querySelectorAll('.add-to-cart-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const productId = this.getAttribute('data-product-id');
-                addToCart(productId);
-            });
-        });
 
         const totalProducts = document.querySelectorAll('.product-card').length;
         productCount.textContent = `Showing ${totalProducts} product${totalProducts !== 1 ? 's' : ''}`;

@@ -34,10 +34,11 @@ function recordFailedAttempt($ip, $pdo) {
         $stmt->execute([$ip, date("Y-m-d H:i:s")]);
     } else {
         $login_attempt = $stmt->fetch();
-        $stmt = $pdo->prepare("UPDATE login_attempts SET attempts = ?, last_attempt = ? WHERE ip_address = ?");        $stmt->execute([++$login_attempt['attempts'],  date("Y-m-d H:i:s"), $ip]);
+        $stmt = $pdo->prepare("UPDATE login_attempts SET attempts = ?, last_attempt = ? WHERE ip_address = ?");
+        $stmt->execute([++$login_attempt['attempts'], date("Y-m-d H:i:s"), $ip]);
 
         if ($login_attempt['attempts'] > 4) {
-            BlockUser($ip, $pdo);
+            blockUser($ip, $pdo);
         }
     }
 }
@@ -49,7 +50,7 @@ function resetAttempts($ip, $pdo) {
     $stmt->execute([$ip]);
 }
 
-function BlockUser($ip, $pdo) {
+function blockUser($ip, $pdo) {
     $stmt = $pdo->prepare("UPDATE login_attempts SET blocked_until = ? WHERE ip_address = ?");
     $stmt->execute([date("Y-m-d H:i:s", time() + (30 * 60)), $ip]);
 }
