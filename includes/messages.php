@@ -36,7 +36,9 @@ function getErrorMessage($error) {
 		"invalid_product" => "Invalid product selected.",
 		"product_not_found" => "Product not found.",
 		"delete_failed" => "Failed to delete product. Please try again.",
-		"update_failed" => "Failed to update product. Please try again."
+		"update_failed" => "Failed to update product. Please try again.",
+		"demo_mode_disabled" => "Demo mode: Product editing is disabled for this account to maintain the demo environment.",
+		"demo_mode_edit_disabled" => "Demo mode: Product editing is disabled for this account. View products from the admin panel instead."
 	];
 
 	return isset($error_messages[$error]) ? $error_messages[$error] : "An error occurred. Please try again.";

@@ -5,6 +5,10 @@ require "../includes/csrf.php";
 require "../includes/messages.php";
 redirectIfLoggedIn(); 
 $csrf_token = generateCSRFToken();
+
+$form_data = $_SESSION['form_data'] ?? [];
+$field_errors = $_SESSION['field_errors'] ?? [];
+unset($_SESSION['form_data'], $_SESSION['field_errors']);
 ?>
 
 <!DOCTYPE html>
@@ -19,6 +23,16 @@ $csrf_token = generateCSRFToken();
 <body>
     <div class="form-container">
         <h1><i class="bi bi-box-arrow-in-right"></i> Welcome Back</h1>
+        
+        <div class="demo-accounts-notice">
+            <h3><i class="bi bi-info-circle"></i> Demo Accounts Available</h3>
+            <div class="demo-account">
+                <strong>User:</strong> username: <code>user</code> password: <code>user</code>
+            </div>
+            <div class="demo-account">
+                <strong>Admin:</strong> username: <code>admin</code> password: <code>admin</code>
+            </div>
+        </div>
         
         <?php if (isset($_GET['error'])) : ?>
             <div class="error-message">
@@ -37,12 +51,21 @@ $csrf_token = generateCSRFToken();
         <form action="../src/process_login.php" method="POST">
             <div class="form-group">
                 <label for="username">Username</label>
-                <input type="text" id="username" name="username" placeholder="Enter your username" required>
+                <input type="text" id="username" name="username" placeholder="Enter your username" 
+                       value="<?php echo htmlspecialchars($form_data['username'] ?? ''); ?>"
+                       class="<?php echo isset($field_errors['username']) ? 'error' : ''; ?>" required>
+                <?php if (isset($field_errors['username'])): ?>
+                    <small class="field-error"><?php echo $field_errors['username']; ?></small>
+                <?php endif; ?>
             </div>
             
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                <input type="password" id="password" name="password" placeholder="Enter your password" 
+                       class="<?php echo isset($field_errors['password']) ? 'error' : ''; ?>" required>
+                <?php if (isset($field_errors['password'])): ?>
+                    <small class="field-error"><?php echo $field_errors['password']; ?></small>
+                <?php endif; ?>
             </div>
             
             <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">

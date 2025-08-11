@@ -2,16 +2,23 @@ RewriteEngine On
 
 RewriteBase /project/public/
 
+# Remove trailing slash if it exists
+RewriteRule ^([^/]+)/$ $1 [R=301,L]
+
+# Check if the file exists directly
 RewriteCond %{REQUEST_FILENAME} -f
 RewriteRule ^ - [L]
 
+# Check if the directory exists
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 
+# Rewrite clean URLs to .php files
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^([a-zA-Z0-9_-]+)$ $1.php [L]
+RewriteRule ^([a-zA-Z0-9_-]+)/?$ $1.php [L]
 
+# Handle query strings
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^([a-zA-Z0-9_-]+)\?(.*)$ $1.php?$2 [L,QSA] 

@@ -6,6 +6,10 @@ require "../includes/csrf.php";
 require "../includes/messages.php";
 redirectIfLoggedIn();
 $csrf_token = generateCSRFToken();
+
+$form_data = $_SESSION['form_data'] ?? [];
+$field_errors = $_SESSION['field_errors'] ?? [];
+unset($_SESSION['form_data'], $_SESSION['field_errors']);
 ?>
 
 <!DOCTYPE html>
@@ -38,22 +42,40 @@ $csrf_token = generateCSRFToken();
         <form action="../src/process_register.php" method="POST">
             <div class="form-group">
                 <label for="username">Username</label>
-                <input type="text" id="username" name="username" placeholder="Choose a username" required>
+                <input type="text" id="username" name="username" placeholder="Choose a username" 
+                       value="<?php echo htmlspecialchars($form_data['username'] ?? ''); ?>"
+                       class="<?php echo isset($field_errors['username']) ? 'error' : ''; ?>" required>
+                <?php if (isset($field_errors['username'])): ?>
+                    <small class="field-error"><?php echo $field_errors['username']; ?></small>
+                <?php endif; ?>
             </div>
             
             <div class="form-group">
                 <label for="email">Email</label>
-                <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                <input type="email" id="email" name="email" placeholder="Enter your email" 
+                       value="<?php echo htmlspecialchars($form_data['email'] ?? ''); ?>"
+                       class="<?php echo isset($field_errors['email']) ? 'error' : ''; ?>" required>
+                <?php if (isset($field_errors['email'])): ?>
+                    <small class="field-error"><?php echo $field_errors['email']; ?></small>
+                <?php endif; ?>
             </div>
             
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="Create a password" required>
+                <input type="password" id="password" name="password" placeholder="Create a password" 
+                       class="<?php echo isset($field_errors['password']) ? 'error' : ''; ?>" required>
+                <?php if (isset($field_errors['password'])): ?>
+                    <small class="field-error"><?php echo $field_errors['password']; ?></small>
+                <?php endif; ?>
             </div>
             
             <div class="form-group">
                 <label for="confirm-password">Confirm Password</label>
-                <input type="password" id="confirm-password" name="confirm-password" placeholder="Confirm your password" required>
+                <input type="password" id="confirm-password" name="confirm-password" placeholder="Confirm your password" 
+                       class="<?php echo isset($field_errors['confirm-password']) ? 'error' : ''; ?>" required>
+                <?php if (isset($field_errors['confirm-password'])): ?>
+                    <small class="field-error"><?php echo $field_errors['confirm-password']; ?></small>
+                <?php endif; ?>
             </div>
             
             <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">

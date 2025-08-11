@@ -35,6 +35,19 @@ A complete e-commerce website I built using PHP and MySQL. Started as a simple l
    - Put files in your web server directory
    - Visit `localhost/project/public/`
 
+## Features 
+
+- **Security**: CSRF protection, prepared statements, rate limiting
+- **User Experience**: Clean interface, error messages, success feedback
+- **Admin Panel**: Full product management with image uploads
+- **Shopping Cart**: Persistent cart that remembers items between sessions
+- **Profile System**: Comprehensive user account management
+PHP and MySQL running
+
+3. **Access the site**
+   - Put files in your web server directory
+   - Visit `localhost/project/public/`
+
 ## Features I'm proud of
 
 - **Security**: CSRF protection, prepared statements, rate limiting

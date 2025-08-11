@@ -3,6 +3,7 @@ session_start();
 
 include "../includes/auth.php";
 include "../includes/User.php";
+include "../includes/UserAddress.php";
 include "../includes/csrf.php";
 include "../includes/db.php";
 include "../includes/messages.php";
@@ -12,12 +13,17 @@ requireLogin();
 $csrf_token = generateCSRFToken();
 
 $userObj = new User($pdo);
+$userAddress = new UserAddress($pdo);
 $userData = $userObj->getUserById($_SESSION['user_id']);
 
 $cart = new Cart($pdo);
 $cartCount = $cart->getCartCount($_SESSION['user_id']);
 
 $activeTab = $_GET['tab'] ?? 'profile';
+
+if ($activeTab === 'addresses') {
+    $userAddresses = $userAddress->getUserAddresses($_SESSION['user_id']);
+}
 ?>
 
 <!DOCTYPE html>
@@ -80,9 +86,6 @@ $activeTab = $_GET['tab'] ?? 'profile';
                     </a>
                     <a href="?tab=security" class="<?php echo $activeTab === 'security' ? 'active' : ''; ?>">
                         <i class="bi bi-shield-lock"></i> Security
-                    </a>
-                    <a href="?tab=settings" class="<?php echo $activeTab === 'settings' ? 'active' : ''; ?>">
-                        <i class="bi bi-gear"></i> Settings
                     </a>
                 </nav>
             </div>
@@ -158,11 +161,96 @@ $activeTab = $_GET['tab'] ?? 'profile';
                                 <i class="bi bi-plus-circle"></i>
                                 <h3>Add New Address</h3>
                                 <p>Add a shipping address for faster checkout</p>
-                                <button class="add-btn">Add Address</button>
+                                <button class="add-btn" onclick="showAddressForm()">Add Address</button>
                             </div>
                             
-                            <div class="no-addresses">
-                                <p>No saved addresses yet. Add your first address above!</p>
+                            <?php if (!empty($userAddresses)): ?>
+                                <div class="addresses-grid">
+                                    <?php foreach ($userAddresses as $address): ?>
+                                        <div class="address-card">
+                                            <?php if ($address['is_default']): ?>
+                                                <div class="default-badge">Default</div>
+                                            <?php endif; ?>
+                                            <h4><?= htmlspecialchars($address['title']) ?></h4>
+                                            <div class="address-details">
+                                                <p><strong><?= htmlspecialchars($address['full_name']) ?></strong></p>
+                                                <p><?= htmlspecialchars($address['street_address']) ?></p>
+                                                <p><?= htmlspecialchars($address['city']) ?></p>
+                                                <p><i class="bi bi-telephone"></i> <?= htmlspecialchars($address['phone']) ?></p>
+                                            </div>
+                                            <div class="address-actions">
+                                                <?php if (!$address['is_default']): ?>
+                                                    <button onclick="setDefaultAddress(<?= $address['id'] ?>)" class="btn-outline">
+                                                        <i class="bi bi-star"></i> Set Default
+                                                    </button>
+                                                <?php endif; ?>
+                                                <button onclick="editAddress(<?= $address['id'] ?>)" class="btn-outline">
+                                                    <i class="bi bi-pencil"></i> Edit
+                                                </button>
+                                                <button onclick="deleteAddress(<?= $address['id'] ?>)" class="btn-danger">
+                                                    <i class="bi bi-trash"></i> Delete
+                                                </button>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php else: ?>
+                                <div class="no-addresses">
+                                    <i class="bi bi-geo-alt" style="font-size: 3rem; color: #64748b; margin-bottom: 1rem;"></i>
+                                    <p>No saved addresses yet. Add your first address above!</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+
+                        <div id="addressModal" class="address-modal" style="display: none;">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h3 id="modalTitle"><i class="bi bi-geo-alt"></i> Add New Address</h3>
+                                    <span class="close" onclick="hideAddressForm()">&times;</span>
+                                </div>
+                                <form id="addressForm" action="../src/manage_address.php" method="POST">
+                                    <input type="hidden" name="csrf_token" value="<?= $csrf_token ?>">
+                                    <input type="hidden" name="action" value="add" id="formAction">
+                                    <input type="hidden" name="address_id" value="" id="addressId">
+                                    
+                                    <div class="form-group">
+                                        <label for="title">Address Title *</label>
+                                        <input type="text" name="title" id="title" required placeholder="Home, Work, etc.">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="full_name">Full Name *</label>
+                                        <input type="text" name="full_name" id="full_name" required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="street_address">Street Address *</label>
+                                        <input type="text" name="street_address" id="street_address" required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="city">City *</label>
+                                        <input type="text" name="city" id="city" required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="phone">Phone Number *</label>
+                                        <input type="tel" name="phone" id="phone" required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" name="is_default" id="is_default" value="1">
+                                            <span class="checkmark"></span>
+                                            Set as default address
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-actions">
+                                        <button type="button" onclick="hideAddressForm()" class="btn-secondary">Cancel</button>
+                                        <button type="submit" class="btn-primary" id="submitBtn">Add Address</button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -202,46 +290,118 @@ $activeTab = $_GET['tab'] ?? 'profile';
                         </div>
                     </div>
 
-                <?php elseif ($activeTab === 'settings'): ?>
-                    <div class="tab-content">
-                        <h1><i class="bi bi-gear"></i> Account Settings</h1>
-                        
-                        <div class="settings-grid">
-                            <div class="setting-card">
-                                <h3><i class="bi bi-bell"></i> Notifications</h3>
-                                <p>Manage your email preferences</p>
-                                
-                                <div class="toggle-group">
-                                    <label class="toggle">
-                                        <input type="checkbox" checked>
-                                        <span class="slider"></span>
-                                        Order updates
-                                    </label>
-                                    
-                                    <label class="toggle">
-                                        <input type="checkbox" checked>
-                                        <span class="slider"></span>
-                                        Promotional emails
-                                    </label>
-                                    
-                                    <label class="toggle">
-                                        <input type="checkbox">
-                                        <span class="slider"></span>
-                                        SMS notifications
-                                    </label>
-                                </div>
-                            </div>
-                            
-                            <div class="setting-card danger">
-                                <h3><i class="bi bi-exclamation-triangle"></i> Danger Zone</h3>
-                                <p>Irreversible actions</p>
-                                <button class="danger-btn">Delete Account</button>
-                            </div>
-                        </div>
-                    </div>
                 <?php endif; ?>
             </div>
         </div>
     </main>
+
+    <script>
+        function showAddressForm() {
+            document.getElementById('addressModal').style.display = 'block';
+            document.getElementById('modalTitle').innerHTML = '<i class="bi bi-geo-alt"></i> Add New Address';
+            document.getElementById('formAction').value = 'add';
+            document.getElementById('submitBtn').textContent = 'Add Address';
+            document.getElementById('addressForm').reset();
+            document.getElementById('addressId').value = '';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hideAddressForm() {
+            document.getElementById('addressModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        function editAddress(addressId) {
+            <?php if (!empty($userAddresses)): ?>
+                const addresses = <?= json_encode($userAddresses) ?>;
+                const address = addresses.find(addr => addr.id == addressId);
+                
+                if (address) {
+                    document.getElementById('modalTitle').innerHTML = '<i class="bi bi-geo-alt"></i> Edit Address';
+                    document.getElementById('formAction').value = 'edit';
+                    document.getElementById('submitBtn').textContent = 'Update Address';
+                    document.getElementById('addressId').value = address.id;
+                    document.getElementById('title').value = address.title;
+                    document.getElementById('full_name').value = address.full_name;
+                    document.getElementById('street_address').value = address.street_address;
+                    document.getElementById('city').value = address.city;
+                    document.getElementById('phone').value = address.phone;
+                    document.getElementById('is_default').checked = address.is_default == 1;
+                    
+                    document.getElementById('addressModal').style.display = 'block';
+                    document.body.style.overflow = 'hidden';
+                }
+            <?php endif; ?>
+        }
+
+        function deleteAddress(addressId) {
+            if (confirm('Are you sure you want to delete this address?')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '../src/manage_address.php';
+                
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrf_token';
+                csrfInput.value = '<?= $csrf_token ?>';
+                
+                const actionInput = document.createElement('input');
+                actionInput.type = 'hidden';
+                actionInput.name = 'action';
+                actionInput.value = 'delete';
+                
+                const idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = 'address_id';
+                idInput.value = addressId;
+                
+                form.appendChild(csrfInput);
+                form.appendChild(actionInput);
+                form.appendChild(idInput);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        function setDefaultAddress(addressId) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '../src/manage_address.php';
+            
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrf_token';
+            csrfInput.value = '<?= $csrf_token ?>';
+            
+            const actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'action';
+            actionInput.value = 'set_default';
+            
+            const idInput = document.createElement('input');
+            idInput.type = 'hidden';
+            idInput.name = 'address_id';
+            idInput.value = addressId;
+            
+            form.appendChild(csrfInput);
+            form.appendChild(actionInput);
+            form.appendChild(idInput);
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('addressModal');
+            if (event.target === modal) {
+                hideAddressForm();
+            }
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                hideAddressForm();
+            }
+        });
+    </script>
 </body>
 </html>

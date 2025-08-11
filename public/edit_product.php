@@ -9,6 +9,11 @@ require_once "../includes/Product.php";
 requireLogin();
 requireAdmin();
 
+if (isDemoAdmin()) {
+    header('Location: admin?error=demo_mode_edit_disabled');
+    exit();
+}
+
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     header('Location: admin?error=invalid_product');
     exit();

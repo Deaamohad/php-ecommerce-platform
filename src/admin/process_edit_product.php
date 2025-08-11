@@ -8,6 +8,11 @@ require_once "../../includes/Product.php";
 requireLogin();
 requireAdmin();
 
+if (isDemoAdmin()) {
+    header("Location: ../../public/admin.php?error=demo_mode_disabled");
+    exit();
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: ../../public/admin.php');
     exit();

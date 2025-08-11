@@ -2,6 +2,7 @@
 session_start();
 require_once "../includes/db.php";
 require_once "../includes/Cart.php";
+require_once "../includes/csrf.php";
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: ../public/login.php');
@@ -9,6 +10,12 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['product_id'])) {
+    if (!validateCSRFToken($_POST['csrf_token'] ?? '')) {
+        $_SESSION['error'] = "Invalid request. Please try again.";
+        header('Location: ../public/products.php');
+        exit();
+    }
+    
     $cart = new Cart($pdo);
     $user_id = $_SESSION['user_id'];
     $product_id = $_POST['product_id'];

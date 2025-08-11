@@ -3,6 +3,9 @@ session_start();
 require_once "../includes/db.php";
 require_once "../includes/Product.php";
 require_once "../includes/Cart.php";
+require_once "../includes/csrf.php";
+
+$csrf_token = generateCSRFToken();
 
 $product = new Product($pdo);
 $products = $product->getAllProducts();
@@ -66,6 +69,17 @@ if (isset($_SESSION['user_id'])) {
     </div>
 
     <div class="container">
+        <?php if (!isset($_SESSION['user_id'])): ?>
+            <div class="demo-notice-banner">
+                <div class="demo-content">
+                    <h3><i class="bi bi-info-circle"></i> Try the Demo</h3>
+                    <p><strong>User:</strong> username: <span>user</span> password: <span>user</span></p>
+                    <p><strong>Admin:</strong> username: <span>admin</span> password: <span>admin</span></p>
+                    <a href="login" class="demo-login-btn">Login Now</a>
+                </div>
+            </div>
+        <?php endif; ?>
+        
         <main>
             <div class="main-content">
                 <aside class="filter-sidebar">
@@ -158,6 +172,7 @@ if (isset($_SESSION['user_id'])) {
                                         <?php if ($prod['stock_quantity'] > 0): ?>
                                             <?php if (isset($_SESSION['user_id'])): ?>
                                                 <form method="POST" action="../src/add_to_cart.php" style="display: inline;">
+                                                    <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                                                     <input type="hidden" name="product_id" value="<?php echo $prod['id']; ?>">
                                                     <button type="submit" class="add-to-cart-btn">
                                                         <i class="bi bi-cart-plus"></i> Add to Cart

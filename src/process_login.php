@@ -6,27 +6,35 @@ require_once "../includes/db.php";
 require_once "../includes/csrf.php";
 require_once "../includes/rate_limiting.php";
 
+function redirectWithLoginError($error, $field = null, $message = null) {
+    $_SESSION['form_data'] = [
+        'username' => $_POST['username'] ?? ''
+    ];
+    
+    if ($field && $message) {
+        $_SESSION['field_errors'] = [$field => $message];
+    }
+    
+    recordFailedAttempt(getUserIP(), $GLOBALS['pdo']);
+    header("Location: ../public/login?error=$error");
+    exit();
+}
+
 if (isIpBlocked(getUserIP(), $pdo)) {
     header("Location: ../public/login?error=too-many-requests");
     exit();
 }
 
 if (!validateCSRFToken($_POST['csrf_token'])) {
-    recordFailedAttempt(getUserIP(), $pdo);
-    header("Location: ../public/login?error=csrf-token-invalid");
-    exit();
+    redirectWithLoginError('csrf-token-invalid');
 }
 
 if (!isset($_POST['username']) || !isset($_POST['password'])) {
-    recordFailedAttempt(getUserIP(), $pdo);
-    header("Location: ../public/login?error=missing-data");
-    exit();
+    redirectWithLoginError('missing-data');
 }
 
 if (empty(trim($_POST['username'])) || empty($_POST['password'])) {
-    recordFailedAttempt(getUserIP(), $pdo);
-    header("Location: ../public/login?error=empty-fields");
-    exit();
+    redirectWithLoginError('empty-fields');
 }
 
 $username = trim($_POST["username"]);
@@ -36,17 +44,14 @@ $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ?");
 $stmt->execute([$username]);
 
 if ($stmt->rowCount() == 0) {
-    recordFailedAttempt(getUserIP(), $pdo);
-    header("Location: ../public/login?error=invalid-credentials");
-    exit();
-
+    redirectWithLoginError('invalid-credentials', 'username', 'Username not found');
 } else {
     $user = $stmt->fetch();
     if (!password_verify($password, $user['hashed_password'])) {
-        recordFailedAttempt(getUserIP(), $pdo);
-        header("Location: ../public/login?error=invalid-credentials");
-        exit();
+        redirectWithLoginError('invalid-credentials', 'password', 'Incorrect password');
     } else {
+        unset($_SESSION['form_data'], $_SESSION['field_errors']);
+        
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
         $_SESSION['last_activity'] = time();

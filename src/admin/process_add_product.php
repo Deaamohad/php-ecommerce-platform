@@ -9,6 +9,11 @@ require_once "../../includes/Product.php";
 requireLogin();
 requireAdmin();
 
+if (isDemoAdmin()) {
+    header("Location: ../../public/admin.php?error=demo_mode_disabled");
+    exit();
+}
+
 if (!validateCSRFToken($_POST['csrf_token'])) {
     header("Location: ../../public/admin.php?error=csrf-token-invalid");
     exit();

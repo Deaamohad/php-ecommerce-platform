@@ -29,3 +29,19 @@ function requireAdmin() {
         exit();
     }
 }
+
+function isDemoAdmin() {
+    return isset($_SESSION['username']) && $_SESSION['username'] === 'admin';
+}
+
+function isDemoUser() {
+    return isset($_SESSION['username']) && $_SESSION['username'] === 'user';
+}
+
+function getDemoMessage() {
+    return "This is a demo account for portfolio viewing. Product editing is disabled to maintain the demo environment for other visitors.";
+}
+
+function getDemoUserMessage() {
+    return "This is a demo user account for portfolio viewing. Feel free to browse products, add items to cart, and test the checkout process.";
+}

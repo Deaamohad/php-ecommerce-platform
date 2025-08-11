@@ -82,6 +82,26 @@ body {
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
+.form-group input.error {
+    border-color: #ef4444;
+    background: #450a0a;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.form-group input.error:focus {
+    border-color: #ef4444;
+    background: #450a0a;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+.field-error {
+    display: block;
+    color: #fca5a5;
+    font-size: 12px;
+    margin-top: 4px;
+    margin-bottom: 0;
+}
+
 .form-group input[type="checkbox"] {
     margin-right: 8px;
     transform: scale(1.2);
@@ -176,6 +196,56 @@ body {
     .form-container h1 {
         font-size: 24px;
     }
+    
+    .demo-accounts-notice {
+        padding: 12px;
+    }
+    
+    .demo-account {
+        font-size: 13px;
+    }
+}
+
+.demo-accounts-notice {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: 1px solid #047857;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 24px;
+    text-align: left;
+}
+
+.demo-accounts-notice h3 {
+    color: white;
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.demo-account {
+    color: #a7f3d0;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.demo-account:last-child {
+    margin-bottom: 0;
+}
+
+.demo-account strong {
+    color: white;
+}
+
+.demo-account code {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
 }
 
 

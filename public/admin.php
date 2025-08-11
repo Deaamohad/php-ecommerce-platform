@@ -66,7 +66,14 @@ $products = $product->getAllProducts();
         <div class="form-container">
             <h2><i class="bi bi-plus-circle"></i> Add New Product</h2>
             
-            <form action="../src/admin/process_add_product.php" method="POST" enctype="multipart/form-data">
+            <?php if (isDemoAdmin()): ?>
+                <div class="demo-notice">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Demo Account Notice:</strong> <?php echo getDemoMessage(); ?>
+                </div>
+            <?php endif; ?>
+            
+            <form action="../src/admin/process_add_product.php" method="POST" enctype="multipart/form-data" <?php echo isDemoAdmin() ? 'style="pointer-events: none; opacity: 0.6;"' : ''; ?>>
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                 
                 <div class="form-group">
@@ -150,7 +157,7 @@ $products = $product->getAllProducts();
                     </div>
                 </div>
                 
-                <button type="submit" class="submit-btn">
+                <button type="submit" class="submit-btn" <?php echo isDemoAdmin() ? 'disabled title="Demo mode - editing disabled"' : ''; ?>>
                     <i class="bi bi-plus-lg"></i> Add Product
                 </button>
             </form>
@@ -182,16 +189,25 @@ $products = $product->getAllProducts();
                             </div>
                             
                             <div class="product-actions">
-                                <a href="edit_product.php?id=<?php echo $prod['id']; ?>" class="edit-btn">
-                                    <i class="bi bi-pencil"></i> Edit
-                                </a>
-                                <form method="POST" action="../src/admin/delete_product.php" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this product?')">
-                                    <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
-                                    <input type="hidden" name="product_id" value="<?php echo $prod['id']; ?>">
-                                    <button type="submit" class="delete-btn">
+                                <?php if (isDemoAdmin()): ?>
+                                    <span class="demo-disabled-btn edit-btn" title="Demo mode - editing disabled">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </span>
+                                    <span class="demo-disabled-btn delete-btn" title="Demo mode - editing disabled">
                                         <i class="bi bi-trash"></i> Delete
-                                    </button>
-                                </form>
+                                    </span>
+                                <?php else: ?>
+                                    <a href="edit_product.php?id=<?php echo $prod['id']; ?>" class="edit-btn">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </a>
+                                    <form method="POST" action="../src/admin/delete_product.php" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this product?')">
+                                        <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+                                        <input type="hidden" name="product_id" value="<?php echo $prod['id']; ?>">
+                                        <button type="submit" class="delete-btn">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endforeach; ?>
