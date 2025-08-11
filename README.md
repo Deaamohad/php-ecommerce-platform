@@ -22,8 +22,8 @@ A complete e-commerce website I built using PHP and MySQL. Started as a simple l
 
 1. **Database Setup**
    ```sql
-   CREATE DATABASE ecommerce;
-   USE ecommerce;
+   CREATE DATABASE ecommerce_system;
+   USE ecommerce_system;
    ```
    Then import `database/schema.sql`
 
@@ -48,7 +48,7 @@ PHP and MySQL running
    - Put files in your web server directory
    - Visit `localhost/project/public/`
 
-## Features I'm proud of
+## Features 
 
 - **Security**: CSRF protection, prepared statements, rate limiting
 - **User Experience**: Clean interface, error messages, success feedback
