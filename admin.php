@@ -73,7 +73,7 @@ $products = $product->getAllProducts();
                 </div>
             <?php endif; ?>
             
-            <form action="../src/admin/process_add_product.php" method="POST" enctype="multipart/form-data" <?php echo isDemoAdmin() ? 'style="pointer-events: none; opacity: 0.6;"' : ''; ?>>
+                            <form action="src/admin/process_add_product.php" method="POST" enctype="multipart/form-data" <?php echo isDemoAdmin() ? 'style="pointer-events: none; opacity: 0.6;"' : ''; ?>>
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                 
                 <div class="form-group">
@@ -200,7 +200,7 @@ $products = $product->getAllProducts();
                                     <a href="edit_product.php?id=<?php echo $prod['id']; ?>" class="edit-btn">
                                         <i class="bi bi-pencil"></i> Edit
                                     </a>
-                                    <form method="POST" action="../src/admin/delete_product.php" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this product?')">
+                                    <form method="POST" action="src/admin/delete_product.php" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this product?')">
                                         <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                                         <input type="hidden" name="product_id" value="<?php echo $prod['id']; ?>">
                                         <button type="submit" class="delete-btn">

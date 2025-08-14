@@ -109,7 +109,7 @@ if ($activeTab === 'addresses') {
                     <div class="tab-content">
                         <h1><i class="bi bi-person"></i> Personal Information</h1>
                         
-                        <form action="../src/update_profile.php" method="POST" class="profile-form">
+                        <form action="src/update_profile.php" method="POST" class="profile-form">
                             <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                             
                             <div class="form-group">
@@ -208,7 +208,7 @@ if ($activeTab === 'addresses') {
                                     <h3 id="modalTitle"><i class="bi bi-geo-alt"></i> Add New Address</h3>
                                     <span class="close" onclick="hideAddressForm()">&times;</span>
                                 </div>
-                                <form id="addressForm" action="../src/manage_address.php" method="POST">
+                                <form id="addressForm" action="src/manage_address.php" method="POST">
                                     <input type="hidden" name="csrf_token" value="<?= $csrf_token ?>">
                                     <input type="hidden" name="action" value="add" id="formAction">
                                     <input type="hidden" name="address_id" value="" id="addressId">
@@ -264,7 +264,7 @@ if ($activeTab === 'addresses') {
                                 <h3><i class="bi bi-key"></i> Change Password</h3>
                                 <p>Keep your account secure with a strong password</p>
                                 
-                                <form action="../src/update_password.php" method="POST" class="password-form">
+                                <form action="src/update_password.php" method="POST" class="password-form">
                                     <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                                     
                                     <div class="form-group">
@@ -338,7 +338,7 @@ if ($activeTab === 'addresses') {
             if (confirm('Are you sure you want to delete this address?')) {
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = '../src/manage_address.php';
+                form.action = 'src/manage_address.php';
                 
                 const csrfInput = document.createElement('input');
                 csrfInput.type = 'hidden';
@@ -366,7 +366,7 @@ if ($activeTab === 'addresses') {
         function setDefaultAddress(addressId) {
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = '../src/manage_address.php';
+            form.action = 'src/manage_address.php';
             
             const csrfInput = document.createElement('input');
             csrfInput.type = 'hidden';

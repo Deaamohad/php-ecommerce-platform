@@ -75,7 +75,7 @@ $categories = $stmt->fetchAll();
         <div class="form-container">
             <h2><i class="bi bi-pencil"></i> Edit: <?php echo htmlspecialchars($productData['name']); ?></h2>
             
-            <form action="../src/admin/process_edit_product.php" method="POST" enctype="multipart/form-data">
+                            <form action="src/admin/process_edit_product.php" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                 <input type="hidden" name="product_id" value="<?php echo $productData['id']; ?>">
                 

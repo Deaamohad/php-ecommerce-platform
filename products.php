@@ -171,7 +171,7 @@ if (isset($_SESSION['user_id'])) {
                                         
                                         <?php if ($prod['stock_quantity'] > 0): ?>
                                             <?php if (isset($_SESSION['user_id'])): ?>
-                                                <form method="POST" action="../src/add_to_cart.php" style="display: inline;">
+                                                <form method="POST" action="src/add_to_cart.php" style="display: inline;">
                                                     <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                                                     <input type="hidden" name="product_id" value="<?php echo $prod['id']; ?>">
                                                     <button type="submit" class="add-to-cart-btn">

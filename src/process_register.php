@@ -2,9 +2,9 @@
 
 session_start();
 
-require_once "includes/db.php";
-require_once "includes/csrf.php";
-require_once "includes/validation.php";
+require_once "../includes/db.php";
+require_once "../includes/csrf.php";
+require_once "../includes/validation.php";
 
 function redirectWithError($error, $field = null, $message = null) {
     $_SESSION['form_data'] = [
@@ -16,7 +16,7 @@ function redirectWithError($error, $field = null, $message = null) {
         $_SESSION['field_errors'] = [$field => $message];
     }
     
-    header("Location: register?error=$error");
+    header("Location: ../register?error=$error");
     exit();
 }
 
@@ -69,7 +69,7 @@ if ($stmt->rowCount() > 0) {
     $stmt->execute([$username, $email, $hashed_password]);
     
     unset($_SESSION['form_data'], $_SESSION['field_errors']);
-    header("Location: login?success=registration-complete");
+    header("Location: ../login?success=registration-complete");
     exit();
 }
 ?>

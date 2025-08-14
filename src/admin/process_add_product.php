@@ -1,31 +1,31 @@
 <?php
 session_start();
 
-require_once "includes/auth.php";
-require_once "includes/csrf.php";
-require_once "includes/db.php";
-require_once "includes/Product.php";
+require_once "../../includes/auth.php";
+require_once "../../includes/csrf.php";
+require_once "../../includes/db.php";
+require_once "../../includes/Product.php";
 
 requireLogin();
 requireAdmin();
 
 if (isDemoAdmin()) {
-    header("Location: admin?error=demo_mode_disabled");
+    header("Location: ../../admin?error=demo_mode_disabled");
     exit();
 }
 
 if (!validateCSRFToken($_POST['csrf_token'])) {
-    header("Location: admin?error=csrf-token-invalid");
+    header("Location: ../../admin?error=csrf-token-invalid");
     exit();
 }
 
 if (!isset($_POST['name']) || !isset($_POST['price']) || !isset($_POST['stock_quantity']) || !isset($_POST['category_id'])) {
-    header("Location: admin?error=missing-data");
+    header("Location: ../../admin?error=missing-data");
     exit();
 }
 
 if (empty(trim($_POST['name'])) || empty($_POST['price']) || empty($_POST['stock_quantity']) || empty($_POST['category_id'])) {
-    header("Location: admin?error=empty-fields");
+    header("Location: ../../admin?error=empty-fields");
     exit();
 }
 
@@ -37,22 +37,22 @@ $category_id = intval($_POST['category_id']);
 $image_url = trim($_POST['image_url'] ?? '');
 
 if ($price <= 0) {
-    header("Location: admin?error=invalid-price");
+    header("Location: ../../admin?error=invalid-price");
     exit();
 }
 
 if ($stock_quantity < 0) {
-    header("Location: admin?error=invalid-stock");
+    header("Location: ../../admin?error=invalid-stock");
     exit();
 }
 
 if ($category_id <= 0) {
-    header("Location: admin?error=invalid-category");
+    header("Location: ../../admin?error=invalid-category");
     exit();
 }
 
 if (strlen($name) < 2 || strlen($name) > 100) {
-    header("Location: admin?error=invalid-name");
+    header("Location: ../../admin?error=invalid-name");
     exit();
 }
 
@@ -74,16 +74,16 @@ try {
         $image_file
     );
     
-    header("Location: admin?success=product-added");
+    header("Location: ../../admin?success=product-added");
     exit();
     
 } catch (Exception $e) {
     error_log("Add product error: " . $e->getMessage());
     
     if (strpos($e->getMessage(), 'file') !== false || strpos($e->getMessage(), 'image') !== false) {
-        header("Location: admin?error=image-upload-failed");
+        header("Location: ../../admin?error=image-upload-failed");
     } else {
-        header("Location: admin?error=database-error");
+        header("Location: ../../admin?error=database-error");
     }
     exit();
 }

@@ -520,7 +520,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 cancelAddressEdit();
                 
-                fetch('../src/save_address.php', {
+                fetch('src/save_address.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

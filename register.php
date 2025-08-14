@@ -39,7 +39,7 @@ unset($_SESSION['form_data'], $_SESSION['field_errors']);
             </div>
         <?php endif; ?>
         
-        <form action="../src/process_register.php" method="POST">
+        <form action="src/process_register.php" method="POST">
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" placeholder="Choose a username" 
