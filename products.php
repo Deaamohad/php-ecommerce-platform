@@ -13,11 +13,6 @@ $products = $product->getAllProducts();
 $stmt = $pdo->query("SELECT * FROM categories ORDER BY name");
 $categories = $stmt->fetchAll();
 
-$cartCount = 0;
-if (isset($_SESSION['user_id'])) {
-    $cart = new Cart($pdo);
-    $cartCount = $cart->getCartCount($_SESSION['user_id']);
-}
 ?>
 
 <!DOCTYPE html>
@@ -31,42 +26,8 @@ if (isset($_SESSION['user_id'])) {
     <title>Products - Store</title>
 </head>
 <body>
-    <div class="site-header">
-        <div class="container">
-            <div class="header-content">
-                <h1>Store</h1>
-                
-                <div class="search-container">
-                    <input type="text" id="searchInput" placeholder="Search products..." class="search-input">
-                    <i class="bi bi-search search-icon"></i>
-                </div>
-                
-                <nav class="main-nav">
-                    <?php if (isset($_SESSION['user_id'])): ?>
-                        <span class="user-info"><i class="bi bi-person-circle"></i> <?php echo htmlspecialchars($_SESSION['username']); ?></span>
-                        
-                        <div class="cart-nav">
-                            <a href="cart">
-                                <i class="bi bi-cart"></i> Cart
-                                <?php if ($cartCount > 0): ?>
-                                    <span class="cart-badge"><?php echo $cartCount; ?></span>
-                                <?php endif; ?>
-                            </a>
-                        </div>
-                        
-                        <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']): ?>
-                            <a href="admin" class="admin"><i class="bi bi-gear"></i> Admin</a>
-                        <?php endif; ?>
-                        <a href="profile"><i class="bi bi-person"></i> Profile</a>
-                        <a href="logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
-                    <?php else: ?>
-                        <a href="login"><i class="bi bi-box-arrow-in-right"></i> Login</a>
-                        <a href="register" class="primary"><i class="bi bi-person-plus"></i> Register</a>
-                    <?php endif; ?>
-                </nav>
-            </div>
-        </div>
-    </div>
+
+    <?php include 'includes/header.php'; ?>
 
     <div class="container">
         <?php if (!isset($_SESSION['user_id'])): ?>
@@ -160,10 +121,10 @@ if (isset($_SESSION['user_id'])) {
                                     <div class="product-info">
                                         <h3><?php echo htmlspecialchars($prod['name']); ?></h3>
                                         <p class="description"><?php echo htmlspecialchars($prod['description']); ?></p>
-                                        <p class="price">$<?php echo number_format($prod['price'], 2); ?></p>
+                                        <p class="price">JOD <?php echo number_format($prod['price'], 2); ?></p>
                                         <p class="stock">
                                             <?php if ($prod['stock_quantity'] > 0): ?>
-                                                <span class="in-stock"><i class="bi bi-check-circle"></i> In Stock (<?php echo $prod['stock_quantity']; ?>)</span>
+                                                <span class="in-stock"><i class="bi bi-check-circle"></i> In Stock</span>
                                             <?php else: ?>
                                                 <span class="out-of-stock"><i class="bi bi-x-circle"></i> Out of Stock</span>
                                             <?php endif; ?>

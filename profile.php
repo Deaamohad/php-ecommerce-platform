@@ -16,9 +16,6 @@ $userObj = new User($pdo);
 $userAddress = new UserAddress($pdo);
 $userData = $userObj->getUserById($_SESSION['user_id']);
 
-$cart = new Cart($pdo);
-$cartCount = $cart->getCartCount($_SESSION['user_id']);
-
 $activeTab = $_GET['tab'] ?? 'profile';
 
 if ($activeTab === 'addresses') {
@@ -37,31 +34,8 @@ if ($activeTab === 'addresses') {
     <title>My Account - Profile</title>
 </head>
 <body>
-    <header class="site-header">
-        <div class="container">
-            <div class="header-content">
-                <h1><a href="products">Store</a></h1>
-                <nav class="main-nav">
-                    <a href="products"><i class="bi bi-shop"></i> Products</a>
-                    
-                    <div class="cart-nav">
-                        <a href="cart">
-                            <i class="bi bi-cart"></i> Cart
-                            <?php if ($cartCount > 0): ?>
-                                <span class="cart-badge"><?php echo $cartCount; ?></span>
-                            <?php endif; ?>
-                        </a>
-                    </div>
-                    
-                    <a href="profile" class="active"><i class="bi bi-person"></i> Profile</a>
-                    <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']): ?>
-                        <a href="admin"><i class="bi bi-gear"></i> Admin</a>
-                    <?php endif; ?>
-                    <a href="logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
-                </nav>
-            </div>
-        </div>
-    </header>
+
+    <?php include 'includes/header.php'; ?>
 
     <main class="container">
         <div class="profile-container">

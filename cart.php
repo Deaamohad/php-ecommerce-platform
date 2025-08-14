@@ -55,31 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Shopping Cart - Store</title>
 </head>
 <body>
-    <div class="site-header">
-        <div class="container">
-            <div class="header-content">
-                <h1><a href="products">Store</a></h1>
-                <nav class="main-nav">
-                    <a href="products"><i class="bi bi-shop"></i> Products</a>
-                    
-                    <div class="cart-nav">
-                        <a href="cart" class="active">
-                            <i class="bi bi-cart"></i> Cart
-                            <?php if (count($cartItems) > 0): ?>
-                                <span class="cart-badge"><?php echo array_sum(array_column($cartItems, 'quantity')); ?></span>
-                            <?php endif; ?>
-                        </a>
-                    </div>
-                    
-                    <a href="profile"><i class="bi bi-person"></i> Profile</a>
-                    <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']): ?>
-                        <a href="admin"><i class="bi bi-gear"></i> Admin</a>
-                    <?php endif; ?>
-                    <a href="logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
-                </nav>
-            </div>
-        </div>
-    </div>
+
+    <?php include 'includes/header.php'; ?>
 
     <div class="cart-container">
         <?php if (empty($cartItems)): ?>
@@ -105,8 +82,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         
                         <div class="cart-item-details">
                             <h3><?php echo htmlspecialchars($item['name']); ?></h3>
-                            <p class="price">Price: $<?php echo number_format($item['price'], 2); ?></p>
-                            <p class="subtotal">Subtotal: $<?php echo number_format($item['price'] * $item['quantity'], 2); ?></p>
+                            <p class="price">Price: JOD <?php echo number_format($item['price'], 2); ?></p>
+                            <p class="subtotal">Subtotal: JOD <?php echo number_format($item['price'] * $item['quantity'], 2); ?></p>
                             
                             <div class="quantity-controls">
                                 <form method="POST" style="display: contents;">
@@ -143,22 +120,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 <div class="summary-row">
                     <span>Items (<?php echo count($cartItems); ?>):</span>
-                    <span>$<?php echo number_format($cartTotal, 2); ?></span>
+                    <span>JOD <?php echo number_format($cartTotal, 2); ?></span>
                 </div>
                 
                 <div class="summary-row">
                     <span>Shipping:</span>
-                    <span>$5.99</span>
+                    <span>JOD 5.99</span>
                 </div>
                 
                 <div class="summary-row">
                     <span>Tax:</span>
-                    <span>$<?php echo number_format($cartTotal * 0.08, 2); ?></span>
+                    <span>JOD <?php echo number_format($cartTotal * 0.08, 2); ?></span>
                 </div>
                 
                 <div class="summary-row total">
                     <span>Total:</span>
-                    <span>$<?php echo number_format($cartTotal + 5.99 + ($cartTotal * 0.08), 2); ?></span>
+                    <span>JOD <?php echo number_format($cartTotal + 5.99 + ($cartTotal * 0.08), 2); ?></span>
                 </div>
                 
                 <div class="address-section">
@@ -239,12 +216,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="order-item-modal">
                                 <span class="item-name"><?= htmlspecialchars($item['name']) ?></span>
                                 <span class="item-qty">x<?= $item['quantity'] ?></span>
-                                <span class="item-price">$<?= number_format($item['price'] * $item['quantity'], 2) ?></span>
+                                <span class="item-price">JOD <?= number_format($item['price'] * $item['quantity'], 2) ?></span>
                             </div>
                         <?php endforeach; ?>
                     </div>
                     <div class="total-modal">
-                        <strong>Total: $<?= number_format($cartTotal, 2) ?></strong>
+                        <strong>Total: JOD <?= number_format($cartTotal, 2) ?></strong>
                     </div>
                 </div>
 

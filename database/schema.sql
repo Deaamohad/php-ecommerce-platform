@@ -92,3 +92,9 @@ CREATE TABLE user_addresses (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Settings table for global configuration (tax, shipping, etc.)
+CREATE TABLE IF NOT EXISTS settings (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(50) UNIQUE NOT NULL,
+    value VARCHAR(255) NOT NULL
+);

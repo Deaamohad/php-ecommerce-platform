@@ -29,24 +29,8 @@ $products = $product->getAllProducts();
     <title>Admin Dashboard</title>
 </head>
 <body>
-    <header class="site-header">
-        <div class="container">
-            <div class="header-content">
-                <h1><i class="bi bi-shield-check"></i> Admin Dashboard</h1>
-                <nav class="main-nav">
-                    <span class="user-info">
-                        Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?>!
-                    </span>
-                    <a href="products">
-                        <i class="bi bi-shop"></i> Store
-                    </a>
-                    <a href="logout">
-                        <i class="bi bi-box-arrow-right"></i> Logout
-                    </a>
-                </nav>
-            </div>
-        </div>
-    </header>
+
+    <?php include 'includes/header.php'; ?>
 
     <main class="container">
         <?php if (isset($_GET['error'])): ?>
