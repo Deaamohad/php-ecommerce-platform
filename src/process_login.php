@@ -2,9 +2,9 @@
 
 session_start();
 
-require_once "../includes/db.php";
-require_once "../includes/csrf.php";
-require_once "../includes/rate_limiting.php";
+require_once "includes/db.php";
+require_once "includes/csrf.php";
+require_once "includes/rate_limiting.php";
 
 function redirectWithLoginError($error, $field = null, $message = null) {
     $_SESSION['form_data'] = [
@@ -16,12 +16,12 @@ function redirectWithLoginError($error, $field = null, $message = null) {
     }
     
     recordFailedAttempt(getUserIP(), $GLOBALS['pdo']);
-    header("Location: ../public/login?error=$error");
+    header("Location: login?error=$error");
     exit();
 }
 
 if (isIpBlocked(getUserIP(), $pdo)) {
-    header("Location: ../public/login?error=too-many-requests");
+    header("Location: login?error=too-many-requests");
     exit();
 }
 
@@ -58,7 +58,7 @@ if ($stmt->rowCount() == 0) {
         $_SESSION['is_admin'] = $user['is_admin'];
         regenerateCSRFToken();
         resetAttempts(getUserIP(), $pdo);
-        header("Location: ../public/products");
+        header("Location: products");
         exit();
     }
 }

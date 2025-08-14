@@ -2,13 +2,13 @@
 
 function requireLogin() {
     if (!isset($_SESSION['user_id']) || !isset($_SESSION['last_activity'])) {
-        header("Location: ../public/login?error=please-login");
+        header("Location: login?error=please-login");
         exit();
     }
 
     if ((time() - $_SESSION['last_activity']) >= 1800) {
         session_destroy();
-        header("Location: ../public/login?error=session-timed-out");
+        header("Location: login?error=session-timed-out");
         exit();
 
     }
@@ -25,7 +25,7 @@ function redirectIfLoggedIn() {
 
 function requireAdmin() {
     if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] != 1) {    
-        header("Location: ../public/login");
+        header("Location: login");
         exit();
     }
 }

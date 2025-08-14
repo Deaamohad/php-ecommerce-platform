@@ -1,37 +1,21 @@
 <?php
 session_start();
-require_once "../includes/auth.php";
-require_once "../includes/csrf.php";
-require_once "../includes/messages.php";
-require_once "../includes/db.php";
-require_once "../includes/Product.php";
+require_once "includes/auth.php";
+require_once "includes/csrf.php";
+require_once "includes/messages.php";
+require_once "includes/db.php";
+require_once "includes/Product.php";
 
 requireLogin();
 requireAdmin();
-
-if (isDemoAdmin()) {
-    header('Location: admin?error=demo_mode_edit_disabled');
-    exit();
-}
-
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    header('Location: admin?error=invalid_product');
-    exit();
-}
-
-$product_id = $_GET['id'];
-$product = new Product($pdo);
-$productData = $product->getProductById($product_id);
-
-if (!$productData) {
-    header('Location: admin?error=product_not_found');
-    exit();
-}
 
 $csrf_token = generateCSRFToken();
 
 $stmt = $pdo->query("SELECT * FROM categories ORDER BY name");
 $categories = $stmt->fetchAll();
+
+$product = new Product($pdo);
+$products = $product->getAllProducts();
 ?>
 
 <!DOCTYPE html>
@@ -42,23 +26,23 @@ $categories = $stmt->fetchAll();
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/admin.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <title>Edit Product - Admin</title>
+    <title>Admin Dashboard</title>
 </head>
 <body>
     <header class="site-header">
         <div class="container">
             <div class="header-content">
-                <h1><i class="bi bi-pencil-square"></i> Edit Product</h1>
+                <h1><i class="bi bi-shield-check"></i> Admin Dashboard</h1>
                 <nav class="main-nav">
-                                    <a href="admin">
-                    <i class="bi bi-arrow-left"></i> Back to Admin
-                </a>
-                <a href="products">
-                    <i class="bi bi-shop"></i> Store
-                </a>
-                <a href="logout">
-                    <i class="bi bi-box-arrow-right"></i> Logout
-                </a>
+                    <span class="user-info">
+                        Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?>!
+                    </span>
+                    <a href="products">
+                        <i class="bi bi-shop"></i> Store
+                    </a>
+                    <a href="logout">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </a>
                 </nav>
             </div>
         </div>
@@ -72,21 +56,34 @@ $categories = $stmt->fetchAll();
             </div>
         <?php endif; ?>
         
+        <?php if (isset($_GET['success'])): ?>
+            <div class="success-message">
+                <i class="bi bi-check-circle"></i>
+                <?php echo getSuccessMessage($_GET['success']); ?>
+            </div>
+        <?php endif; ?>
+
         <div class="form-container">
-            <h2><i class="bi bi-pencil"></i> Edit: <?php echo htmlspecialchars($productData['name']); ?></h2>
+            <h2><i class="bi bi-plus-circle"></i> Add New Product</h2>
             
-            <form action="../src/admin/process_edit_product.php" method="POST" enctype="multipart/form-data">
+            <?php if (isDemoAdmin()): ?>
+                <div class="demo-notice">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Demo Account Notice:</strong> <?php echo getDemoMessage(); ?>
+                </div>
+            <?php endif; ?>
+            
+            <form action="../src/admin/process_add_product.php" method="POST" enctype="multipart/form-data" <?php echo isDemoAdmin() ? 'style="pointer-events: none; opacity: 0.6;"' : ''; ?>>
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
-                <input type="hidden" name="product_id" value="<?php echo $productData['id']; ?>">
                 
                 <div class="form-group">
                     <label for="name">Product Name</label>
-                    <input type="text" id="name" name="name" value="<?php echo htmlspecialchars($productData['name']); ?>" required>
+                    <input type="text" id="name" name="name" placeholder="Enter product name" required>
                 </div>
                 
                 <div class="form-group">
                     <label for="description">Description</label>
-                    <textarea id="description" name="description" rows="3"><?php echo htmlspecialchars($productData['description']); ?></textarea>
+                    <textarea id="description" name="description" rows="3" placeholder="Enter product description"></textarea>
                 </div>
                 
                 <div class="form-group">
@@ -94,7 +91,7 @@ $categories = $stmt->fetchAll();
                     <select id="category_id" name="category_id" class="filter-select" required>
                         <option value="">Select a category</option>
                         <?php foreach ($categories as $category): ?>
-                            <option value="<?php echo $category['id']; ?>" <?php echo ($productData['category_id'] == $category['id']) ? 'selected' : ''; ?>>
+                            <option value="<?php echo $category['id']; ?>">
                                 <?php echo htmlspecialchars($category['name']); ?>
                             </option>
                         <?php endforeach; ?>
@@ -104,12 +101,12 @@ $categories = $stmt->fetchAll();
                 <div class="form-row">
                     <div class="form-group">
                         <label for="price">Price ($)</label>
-                        <input type="number" id="price" name="price" step="0.01" min="0.01" value="<?php echo $productData['price']; ?>" required>
+                        <input type="number" id="price" name="price" step="0.01" min="0.01" placeholder="0.00" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="stock_quantity">Stock Quantity</label>
-                        <input type="number" id="stock_quantity" name="stock_quantity" min="0" value="<?php echo $productData['stock_quantity']; ?>" required>
+                        <input type="number" id="stock_quantity" name="stock_quantity" min="0" placeholder="0" required>
                     </div>
                 </div>
                 
@@ -118,23 +115,16 @@ $categories = $stmt->fetchAll();
                     
                     <div class="image-tabs">
                         <button type="button" class="tab-btn active" onclick="switchImageTab('upload')">
-                            <i class="bi bi-upload"></i> Upload New File
+                            <i class="bi bi-upload"></i> Upload File
                         </button>
                         <button type="button" class="tab-btn" onclick="switchImageTab('url')">
                             <i class="bi bi-link-45deg"></i> Use URL
                         </button>
                     </div>
                     
-                    <?php if (!empty($productData['image_url'])): ?>
-                        <div class="current-image-display">
-                            <small>Current image:</small>
-                            <img src="<?php echo htmlspecialchars($productData['image_url']); ?>" alt="Current product image" style="max-width: 200px; margin-top: 10px; border-radius: 4px;">
-                        </div>
-                    <?php endif; ?>
-                    
                     <div id="upload-tab" class="image-tab active">
                         <div class="form-group">
-                            <label for="image_file">Choose New Image File</label>
+                            <label for="image_file">Choose Image File</label>
                             <div class="custom-file-upload">
                                 <input type="file" id="image_file" name="image_file" accept="image/*" onchange="previewImage(event)">
                                 <div class="file-upload-btn">
@@ -167,28 +157,80 @@ $categories = $stmt->fetchAll();
                     </div>
                 </div>
                 
-                <button type="submit" class="submit-btn">
-                    <i class="bi bi-pencil"></i> Update Product
+                <button type="submit" class="submit-btn" <?php echo isDemoAdmin() ? 'disabled title="Demo mode - editing disabled"' : ''; ?>>
+                    <i class="bi bi-plus-lg"></i> Add Product
                 </button>
             </form>
         </div>
-    </div>
+
+        <div class="products-list">
+            <h2><i class="bi bi-box-seam"></i> Manage Products</h2>
+            
+            <?php if (empty($products)): ?>
+                <p class="no-products">No products found. Add your first product above!</p>
+            <?php else: ?>
+                <div class="products-grid">
+                    <?php foreach ($products as $prod): ?>
+                        <div class="product-card">
+                            <?php if (!empty($prod['image_url'])): ?>
+                                <img src="<?php echo htmlspecialchars($prod['image_url']); ?>" alt="<?php echo htmlspecialchars($prod['name']); ?>">
+                            <?php else: ?>
+                                <div class="no-image">
+                                    <i class="bi bi-image"></i>
+                                    <span>No Image</span>
+                                </div>
+                            <?php endif; ?>
+                            
+                            <div class="product-info">
+                                <h3><?php echo htmlspecialchars($prod['name']); ?></h3>
+                                <p class="price">$<?php echo number_format($prod['price'], 2); ?></p>
+                                <p class="stock">Stock: <?php echo $prod['stock_quantity']; ?></p>
+                                <p class="category"><?php echo htmlspecialchars($prod['category_name'] ?? 'No Category'); ?></p>
+                            </div>
+                            
+                            <div class="product-actions">
+                                <?php if (isDemoAdmin()): ?>
+                                    <span class="demo-disabled-btn edit-btn" title="Demo mode - editing disabled">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </span>
+                                    <span class="demo-disabled-btn delete-btn" title="Demo mode - editing disabled">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </span>
+                                <?php else: ?>
+                                    <a href="edit_product.php?id=<?php echo $prod['id']; ?>" class="edit-btn">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </a>
+                                    <form method="POST" action="../src/admin/delete_product.php" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this product?')">
+                                        <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+                                        <input type="hidden" name="product_id" value="<?php echo $prod['id']; ?>">
+                                        <button type="submit" class="delete-btn">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+    </main>
 
     <script>
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.image-tab').forEach(tab => tab.classList.remove('active'));
+        function switchImageTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.image-tab').forEach(tabEl => tabEl.classList.remove('active'));
             
-            if (tab === 'upload') {
-                document.querySelector('[onclick="switchTab(\'upload\')"]').classList.add('active');
-                document.getElementById('upload-tab').classList.add('active');
-                removePreview();
-                removeUrlPreview();
+            document.querySelector(`[onclick="switchImageTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            
+            if (tabName === 'upload') {
+                document.getElementById('image_url').value = '';
+                const urlPreview = document.getElementById('url-preview');
+                if (urlPreview) urlPreview.style.display = 'none';
             } else {
-                document.querySelector('[onclick="switchTab(\'url\')"]').classList.add('active');
-                document.getElementById('url-tab').classList.add('active');
+                document.getElementById('image_file').value = '';
                 removePreview();
-                removeUrlPreview();
             }
         }
 
@@ -245,25 +287,27 @@ $categories = $stmt->fetchAll();
             const url = event.target.value;
             if (url) {
                 const img = document.getElementById('url-preview-img');
+                const preview = document.getElementById('url-preview');
+                
                 img.onload = function() {
-                    document.getElementById('url-preview').style.display = 'block';
+                    preview.style.display = 'block';
                 };
                 img.onerror = function() {
-                    document.getElementById('url-preview').style.display = 'none';
+                    preview.style.display = 'none';
                     alert('Could not load image from URL. Please check the URL and try again.');
                 };
                 img.src = url;
             } else {
-                removeUrlPreview();
+                const preview = document.getElementById('url-preview');
+                if (preview) {
+                    preview.style.display = 'none';
+                }
             }
         }
 
-        function removeUrlPreview() {
-            const preview = document.getElementById('url-preview');
-            if (preview) {
-                preview.style.display = 'none';
-            }
-        }
+        document.addEventListener('DOMContentLoaded', function() {
+            switchImageTab('upload');
+        });
     </script>
 </body>
 </html>

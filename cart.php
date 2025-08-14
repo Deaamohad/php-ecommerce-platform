@@ -1,10 +1,10 @@
 <?php
 session_start();
-require_once "../includes/db.php";
-require_once "../includes/Cart.php";
-require_once "../includes/UserAddress.php";
-require_once "../includes/auth.php";
-require_once "../includes/csrf.php";
+require_once "includes/db.php";
+require_once "includes/Cart.php";
+require_once "includes/UserAddress.php";
+require_once "includes/auth.php";
+require_once "includes/csrf.php";
 
 requireLogin();
 

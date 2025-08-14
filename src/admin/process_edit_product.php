@@ -1,62 +1,75 @@
 <?php
 session_start();
-require_once "../../includes/auth.php";
-require_once "../../includes/csrf.php";
-require_once "../../includes/db.php";
-require_once "../../includes/Product.php";
+require_once "includes/auth.php";
+require_once "includes/csrf.php";
+require_once "includes/db.php";
+require_once "includes/Product.php";
 
 requireLogin();
 requireAdmin();
 
 if (isDemoAdmin()) {
-    header("Location: ../../public/admin.php?error=demo_mode_disabled");
+    header("Location: admin?error=demo_mode_disabled");
     exit();
 }
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ../../public/admin.php');
+if (!isset($_POST['product_id']) || !is_numeric($_POST['product_id'])) {
+    header('Location: admin');
     exit();
 }
 
 if (!validateCSRFToken($_POST['csrf_token'])) {
-    header('Location: ../../public/admin.php?error=invalid_token');
+    header('Location: admin?error=invalid_token');
     exit();
 }
 
-$product_id = $_POST['product_id'];
-$name = trim($_POST['name']);
-$description = trim($_POST['description']);
-$price = floatval($_POST['price']);
-$stock_quantity = intval($_POST['stock_quantity']);
-$category_id = intval($_POST['category_id']);
-$image_url = trim($_POST['image_url'] ?? '');
+$product_id = intval($_POST['product_id']);
+$product = new Product($pdo);
+$productData = $product->getProductById($product_id);
 
-if (empty($name) || $price <= 0 || $stock_quantity < 0 || empty($category_id)) {
-    header('Location: ../../public/edit_product.php?id=' . $product_id . '&error=missing_fields');
+if (!$productData) {
+    header('Location: admin?error=product_not_found');
     exit();
 }
 
-try {
-    $product = new Product($pdo);
+$name = trim($_POST['name'] ?? '');
+$description = trim($_POST['description'] ?? '');
+$category_id = intval($_POST['category_id'] ?? 0);
+$price = floatval($_POST['price'] ?? 0);
+$stock_quantity = intval($_POST['stock_quantity'] ?? 0);
+
+if (empty($name) || $category_id <= 0 || $price <= 0 || $stock_quantity < 0) {
+    header('Location: edit_product?id=' . $product_id . '&error=missing_fields');
+    exit();
+}
+
+$updateData = [
+    'name' => $name,
+    'description' => $description,
+    'category_id' => $category_id,
+    'price' => $price,
+    'stock_quantity' => $stock_quantity
+];
+
+// Handle image upload if provided
+if (!empty($_FILES['image_file']['name'])) {
+    $uploader = new ImageUploader($pdo);
+    $imageResult = $uploader->uploadImage($_FILES['image_file']);
     
-    $image_file = null;
-    if (isset($_FILES['image_file']) && $_FILES['image_file']['error'] === UPLOAD_ERR_OK) {
-        $image_file = $_FILES['image_file'];
-    }
-    
-    if ($product->updateProduct($product_id, $name, $description, $price, $stock_quantity, $category_id, $image_url, $image_file)) {
-        header('Location: ../../public/admin.php?success=product_updated');
+    if ($imageResult['success']) {
+        $updateData['image_url'] = $imageResult['path'];
     } else {
-        header('Location: ../../public/edit_product.php?id=' . $product_id . '&error=update_failed');
+        header('Location: edit_product?id=' . $product_id . '&error=image-upload-failed');
+        exit();
     }
-} catch (Exception $e) {
-    error_log("Edit product error: " . $e->getMessage());
-    
-    if (strpos($e->getMessage(), 'file') !== false || strpos($e->getMessage(), 'image') !== false) {
-        header('Location: ../../public/edit_product.php?id=' . $product_id . '&error=image-upload-failed');
-    } else {
-        header('Location: ../../public/edit_product.php?id=' . $product_id . '&error=update_failed');
-    }
+} elseif (!empty($_POST['image_url'])) {
+    $updateData['image_url'] = $_POST['image_url'];
+}
+
+if ($product->updateProduct($product_id, $updateData)) {
+    header('Location: admin?success=product_updated');
+} else {
+    header('Location: edit_product?id=' . $product_id . '&error=update_failed');
 }
 exit();
 ?>

@@ -6,7 +6,7 @@ class ImageUploader {
     private $maxFileSize;
 
     public function __construct() {
-        $this->uploadDir = __DIR__ . '/../public/uploads/products/';
+        $this->uploadDir = __DIR__ . '/../uploads/products/';
         $this->allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
         $this->maxFileSize = 5 * 1024 * 1024;
     }
@@ -145,7 +145,7 @@ class ImageUploader {
             return true;
         }
 
-        $fullPath = __DIR__ . '/../public/' . $imagePath;
+        $fullPath = __DIR__ . '/../' . $imagePath;
         if (file_exists($fullPath)) {
             return unlink($fullPath);
         }
@@ -160,7 +160,7 @@ class ImageUploader {
         }
         
         if (strpos($url, 'uploads/') === 0) {
-            $fullPath = __DIR__ . '/../public/' . $url;
+            $fullPath = __DIR__ . '/../' . $url;
             return file_exists($fullPath);
         }
         

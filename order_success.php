@@ -1,7 +1,7 @@
 <?php
 session_start();
-require_once "../includes/db.php";
-require_once "../includes/auth.php";
+require_once "includes/db.php";
+require_once "includes/auth.php";
 
 requireLogin();
 
@@ -35,7 +35,7 @@ $order_number = $_GET['order'] ?? '';
     </div>
 
     <div class="container">
-        <?php require_once "../includes/messages.php"; ?>
+        <?php require_once "includes/messages.php"; ?>
         
         <main class="main-content">
             <div class="success-container">

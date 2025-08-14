@@ -1,13 +1,13 @@
 <?php
 session_start();
 
-include "../includes/auth.php";
-include "../includes/User.php";
-include "../includes/UserAddress.php";
-include "../includes/csrf.php";
-include "../includes/db.php";
-include "../includes/messages.php";
-include "../includes/Cart.php";
+include "includes/auth.php";
+include "includes/User.php";
+include "includes/UserAddress.php";
+include "includes/csrf.php";
+include "includes/db.php";
+include "includes/messages.php";
+include "includes/Cart.php";
 
 requireLogin();
 $csrf_token = generateCSRFToken();

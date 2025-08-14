@@ -1,6 +1,6 @@
 RewriteEngine On
 
-RewriteBase /project/public/
+RewriteBase /project/
 
 # Remove trailing slash if it exists
 RewriteRule ^([^/]+)/$ $1 [R=301,L]

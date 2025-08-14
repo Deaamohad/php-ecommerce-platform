@@ -1,9 +1,9 @@
 <?php
 session_start();
-require_once "../includes/db.php";
-require_once "../includes/Product.php";
-require_once "../includes/Cart.php";
-require_once "../includes/csrf.php";
+require_once "includes/db.php";
+require_once "includes/Product.php";
+require_once "includes/Cart.php";
+require_once "includes/csrf.php";
 
 $csrf_token = generateCSRFToken();
 
