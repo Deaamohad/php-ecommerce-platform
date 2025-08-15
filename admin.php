@@ -147,6 +147,47 @@ $products = $product->getAllProducts();
             </form>
         </div>
 
+        <div class="settings-section">
+            <h2><i class="bi bi-gear"></i> Store Settings</h2>
+            
+            <?php
+            require_once "includes/Settings.php";
+            $settings = new Settings($pdo);
+            $currentTaxRate = $settings->getTaxRate();
+            $currentShippingFee = $settings->getShippingFee();
+            ?>
+            
+            <form action="src/admin/process_settings.php" method="POST" class="settings-form">
+                <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tax_rate">Tax Rate (%)</label>
+                        <div class="input-with-icon">
+                            <input type="number" id="tax_rate" name="tax_rate" step="0.01" min="0" max="100" 
+                                   value="<?php echo round($currentTaxRate * 100, 2); ?>" required>
+                            <span class="input-suffix">%</span>
+                        </div>
+                        <small class="form-help">Enter as percentage (e.g., 8 for 8%)</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="shipping_fee">Shipping Fee (JOD)</label>
+                        <div class="input-with-icon">
+                            <input type="number" id="shipping_fee" name="shipping_fee" step="0.01" min="0" 
+                                   value="<?php echo $currentShippingFee; ?>" required>
+                            <span class="input-suffix">JOD</span>
+                        </div>
+                        <small class="form-help">Fixed shipping cost for all orders</small>
+                    </div>
+                </div>
+                
+                <button type="submit" class="submit-btn settings-submit">
+                    <i class="bi bi-save"></i> Update Settings
+                </button>
+            </form>
+        </div>
+
         <div class="products-list">
             <h2><i class="bi bi-box-seam"></i> Manage Products</h2>
             

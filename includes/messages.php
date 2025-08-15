@@ -38,7 +38,8 @@ function getErrorMessage($error) {
 		"delete_failed" => "Failed to delete product. Please try again.",
 		"update_failed" => "Failed to update product. Please try again.",
 		"demo_mode_disabled" => "Demo mode: Product editing is disabled for this account to maintain the demo environment.",
-		"demo_mode_edit_disabled" => "Demo mode: Product editing is disabled for this account. View products from the admin panel instead."
+		"demo_mode_edit_disabled" => "Demo mode: Product editing is disabled for this account. View products from the admin panel instead.",
+		"settings_error" => "Settings update failed. Please try again."
 	];
 
 	return isset($error_messages[$error]) ? $error_messages[$error] : "An error occurred. Please try again.";
@@ -54,7 +55,8 @@ function getSuccessMessage($success) {
 		"logged-out" => "You have been logged out successfully.",
 		"product-added" => "Product added successfully!",
 		"product-updated" => "Product updated successfully!",
-		"product_deleted" => "Product deleted successfully!"
+		"product_deleted" => "Product deleted successfully!",
+		"settings_updated" => "Store settings updated successfully!"
 	];
 
 	return isset($success_messages[$success]) ? $success_messages[$success] : "Success!";

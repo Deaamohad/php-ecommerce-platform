@@ -43,33 +43,21 @@ if (empty($name) || $category_id <= 0 || $price <= 0 || $stock_quantity < 0) {
     exit();
 }
 
-$updateData = [
-    'name' => $name,
-    'description' => $description,
-    'category_id' => $category_id,
-    'price' => $price,
-    'stock_quantity' => $stock_quantity
-];
 
-// Handle image upload if provided
-if (!empty($_FILES['image_file']['name'])) {
-    $uploader = new ImageUploader($pdo);
-    $imageResult = $uploader->uploadImage($_FILES['image_file']);
-    
-    if ($imageResult['success']) {
-        $updateData['image_url'] = $imageResult['path'];
+
+// Handle image parameters
+$image_url = !empty($_POST['image_url']) ? $_POST['image_url'] : null;
+$image_file = !empty($_FILES['image_file']['name']) ? $_FILES['image_file'] : null;
+
+try {
+    if ($product->updateProduct($product_id, $name, $description, $price, $stock_quantity, $category_id, $image_url, $image_file)) {
+        header('Location: ../../admin?success=product_updated');
     } else {
-        header('Location: ../../edit_product?id=' . $product_id . '&error=image-upload-failed');
-        exit();
+        header('Location: ../../edit_product?id=' . $product_id . '&error=update_failed');
     }
-} elseif (!empty($_POST['image_url'])) {
-    $updateData['image_url'] = $_POST['image_url'];
-}
-
-if ($product->updateProduct($product_id, $updateData)) {
-    header('Location: ../../admin?success=product_updated');
-} else {
-    header('Location: ../../edit_product?id=' . $product_id . '&error=update_failed');
+} catch (Exception $e) {
+    error_log('Edit product error: ' . $e->getMessage());
+    header('Location: ../../edit_product?id=' . $product_id . '&error=update_failed&message=' . urlencode($e->getMessage()));
 }
 exit();
 ?>

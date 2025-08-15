@@ -3,6 +3,7 @@ session_start();
 require_once "includes/db.php";
 require_once "includes/Cart.php";
 require_once "includes/UserAddress.php";
+require_once "includes/Settings.php";
 require_once "includes/auth.php";
 require_once "includes/csrf.php";
 
@@ -12,9 +13,14 @@ $csrf_token = generateCSRFToken();
 
 $cart = new Cart($pdo);
 $userAddress = new UserAddress($pdo);
+$settings = new Settings($pdo);
 $user_id = $_SESSION['user_id'];
 $cartItems = $cart->getCartItems($user_id);
 $cartTotal = $cart->getCartTotal($user_id);
+$taxRate = $settings->getTaxRate();
+$shippingFee = $settings->getShippingFee();
+$taxAmount = $settings->calculateTax($cartTotal);
+$totalWithTaxAndShipping = $settings->calculateTotal($cartTotal);
 
 $defaultAddress = $userAddress->getDefaultAddress($user_id);
 $userAddresses = $userAddress->getUserAddresses($user_id);
@@ -68,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         <?php else: ?>
             <div class="cart-items-section">
-                <h1><i class="bi bi-cart"></i> Shopping Cart (<?php echo count($cartItems); ?> items)</h1>
+                <h1><i class="bi bi-cart"></i> Shopping Cart (<?php echo $cart->getCartCount($user_id); ?> items)</h1>
                 
                 <?php foreach ($cartItems as $item): ?>
                     <div class="cart-item">
@@ -115,27 +121,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endforeach; ?>
             </div>
             
-            <div class="order-summary">
+            <div class="cart-summary-section">
                 <h2><i class="bi bi-receipt"></i> Order Summary</h2>
                 
                 <div class="summary-row">
-                    <span>Items (<?php echo count($cartItems); ?>):</span>
+                    <span>Items (<?php echo $cart->getCartCount($user_id); ?>):</span>
                     <span>JOD <?php echo number_format($cartTotal, 2); ?></span>
                 </div>
                 
                 <div class="summary-row">
                     <span>Shipping:</span>
-                    <span>JOD 5.99</span>
+                    <span>JOD <?php echo number_format($shippingFee, 2); ?></span>
                 </div>
                 
                 <div class="summary-row">
-                    <span>Tax:</span>
-                    <span>JOD <?php echo number_format($cartTotal * 0.08, 2); ?></span>
+                    <span>Tax (<?php echo round($taxRate * 100, 1); ?>%):</span>
+                    <span>JOD <?php echo number_format($taxAmount, 2); ?></span>
                 </div>
                 
                 <div class="summary-row total">
                     <span>Total:</span>
-                    <span>JOD <?php echo number_format($cartTotal + 5.99 + ($cartTotal * 0.08), 2); ?></span>
+                    <span>JOD <?php echo number_format($totalWithTaxAndShipping, 2); ?></span>
                 </div>
                 
                 <div class="address-section">
@@ -221,7 +227,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <?php endforeach; ?>
                     </div>
                     <div class="total-modal">
-                        <strong>Total: JOD <?= number_format($cartTotal, 2) ?></strong>
+                        <div class="modal-summary-row">
+                            <span>Subtotal:</span>
+                            <span>JOD <?= number_format($cartTotal, 2) ?></span>
+                        </div>
+                        <div class="modal-summary-row">
+                            <span>Shipping:</span>
+                            <span>JOD <?= number_format($shippingFee, 2) ?></span>
+                        </div>
+                        <div class="modal-summary-row">
+                            <span>Tax (<?= round($taxRate * 100, 1) ?>%):</span>
+                            <span>JOD <?= number_format($taxAmount, 2) ?></span>
+                        </div>
+                        <div class="modal-summary-row total">
+                            <strong>Total:</strong>
+                            <strong>JOD <?= number_format($totalWithTaxAndShipping, 2) ?></strong>
+                        </div>
                     </div>
                 </div>
 

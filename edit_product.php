@@ -175,17 +175,17 @@ $categories = $stmt->fetchAll();
     </div>
 
     <script>
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.image-tab').forEach(tab => tab.classList.remove('active'));
+        function switchImageTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.image-tab').forEach(tabContent => tabContent.classList.remove('active'));
             
             if (tab === 'upload') {
-                document.querySelector('[onclick="switchTab(\'upload\')"]').classList.add('active');
+                document.querySelector('[onclick="switchImageTab(\'upload\')"]').classList.add('active');
                 document.getElementById('upload-tab').classList.add('active');
                 removePreview();
                 removeUrlPreview();
             } else {
-                document.querySelector('[onclick="switchTab(\'url\')"]').classList.add('active');
+                document.querySelector('[onclick="switchImageTab(\'url\')"]').classList.add('active');
                 document.getElementById('url-tab').classList.add('active');
                 removePreview();
                 removeUrlPreview();
