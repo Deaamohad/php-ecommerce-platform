@@ -182,34 +182,34 @@ if ($activeTab === 'addresses') {
                                     <h3 id="modalTitle"><i class="bi bi-geo-alt"></i> Add New Address</h3>
                                     <span class="close" onclick="hideAddressForm()">&times;</span>
                                 </div>
-                                <form id="addressForm" action="src/manage_address.php" method="POST">
+                                <form id="addressForm" action="src/manage_address.php" method="POST" onsubmit="return handleFormSubmit(event)">
                                     <input type="hidden" name="csrf_token" value="<?= $csrf_token ?>">
                                     <input type="hidden" name="action" value="add" id="formAction">
                                     <input type="hidden" name="address_id" value="" id="addressId">
                                     
                                     <div class="form-group">
                                         <label for="title">Address Title *</label>
-                                        <input type="text" name="title" id="title" required placeholder="Home, Work, etc.">
+                                        <input type="text" name="title" id="title" required placeholder="Home, Work, etc." maxlength="30">
                                     </div>
                                     
                                     <div class="form-group">
                                         <label for="full_name">Full Name *</label>
-                                        <input type="text" name="full_name" id="full_name" required>
+                                        <input type="text" name="full_name" id="full_name" required maxlength="50">
                                     </div>
                                     
                                     <div class="form-group">
                                         <label for="street_address">Street Address *</label>
-                                        <input type="text" name="street_address" id="street_address" required>
+                                        <input type="text" name="street_address" id="street_address" required maxlength="200">
                                     </div>
                                     
                                     <div class="form-group">
                                         <label for="city">City *</label>
-                                        <input type="text" name="city" id="city" required>
+                                        <input type="text" name="city" id="city" required maxlength="50">
                                     </div>
                                     
                                     <div class="form-group">
                                         <label for="phone">Phone Number *</label>
-                                        <input type="tel" name="phone" id="phone" required>
+                                        <input type="tel" name="phone" id="phone" required maxlength="20">
                                     </div>
                                     
                                     <div class="form-group">
@@ -270,6 +270,89 @@ if ($activeTab === 'addresses') {
     </main>
 
     <script>
+        function validateName(name) {
+            const nameRegex = /^[a-zA-Z\s\u0621-\u064A]{2,50}$/;
+            return nameRegex.test(name.trim());
+        }
+
+        function validatePhone(phone) {
+            const phoneRegex = /^[+]?[\d\s\-\(\)]{7,20}$/;
+            return phoneRegex.test(phone.trim());
+        }
+
+        function validateAddress(address) {
+            return address.trim().length >= 5 && address.trim().length <= 200;
+        }
+
+        function validateCity(city) {
+            const cityRegex = /^[a-zA-Z\s\u0621-\u064A]{2,50}$/;
+            return cityRegex.test(city.trim());
+        }
+
+        function validateTitle(title) {
+            return title.trim().length >= 2 && title.trim().length <= 30;
+        }
+
+        function showError(field, message) {
+            const existingError = field.parentNode.querySelector('.field-error');
+            if (existingError) existingError.remove();
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'field-error';
+            errorDiv.textContent = message;
+            field.parentNode.appendChild(errorDiv);
+            field.style.borderColor = '#ef4444';
+        }
+
+        function clearError(field) {
+            const existingError = field.parentNode.querySelector('.field-error');
+            if (existingError) existingError.remove();
+            field.style.borderColor = '';
+        }
+
+        function validateAddressForm() {
+            let isValid = true;
+            
+            const title = document.getElementById('title');
+            const fullName = document.getElementById('full_name');
+            const streetAddress = document.getElementById('street_address');
+            const city = document.getElementById('city');
+            const phone = document.getElementById('phone');
+
+            clearError(title);
+            clearError(fullName);
+            clearError(streetAddress);
+            clearError(city);
+            clearError(phone);
+
+            if (!validateTitle(title.value)) {
+                showError(title, 'Title must be 2-30 characters long');
+                isValid = false;
+            }
+
+            if (!validateName(fullName.value)) {
+                showError(fullName, 'Full name must be 2-50 characters, letters only');
+                isValid = false;
+            }
+
+            if (!validateAddress(streetAddress.value)) {
+                showError(streetAddress, 'Address must be 5-200 characters long');
+                isValid = false;
+            }
+
+            if (!validateCity(city.value)) {
+                showError(city, 'City must be 2-50 characters, letters only');
+                isValid = false;
+            }
+
+            if (!validatePhone(phone.value)) {
+                showError(phone, 'Invalid phone number format');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
         function showAddressForm() {
             document.getElementById('addressModal').style.display = 'block';
             document.getElementById('modalTitle').innerHTML = '<i class="bi bi-geo-alt"></i> Add New Address';
@@ -363,6 +446,80 @@ if ($activeTab === 'addresses') {
             document.body.appendChild(form);
             form.submit();
         }
+
+        function handleFormSubmit(event) {
+            event.preventDefault();
+            
+            if (!validateAddressForm()) {
+                return false;
+            }
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processing...';
+            
+            setTimeout(() => {
+                document.getElementById('addressForm').submit();
+            }, 100);
+            
+            return true;
+        }
+
+        function addRealTimeValidation() {
+            const fields = ['title', 'full_name', 'street_address', 'city', 'phone'];
+            
+            fields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.addEventListener('blur', function() {
+                        const value = this.value;
+                        
+                        switch(fieldId) {
+                            case 'title':
+                                if (value && !validateTitle(value)) {
+                                    showError(this, 'Title must be 2-30 characters long');
+                                } else {
+                                    clearError(this);
+                                }
+                                break;
+                            case 'full_name':
+                                if (value && !validateName(value)) {
+                                    showError(this, 'Full name must be 2-50 characters, letters only');
+                                } else {
+                                    clearError(this);
+                                }
+                                break;
+                            case 'street_address':
+                                if (value && !validateAddress(value)) {
+                                    showError(this, 'Address must be 5-200 characters long');
+                                } else {
+                                    clearError(this);
+                                }
+                                break;
+                            case 'city':
+                                if (value && !validateCity(value)) {
+                                    showError(this, 'City must be 2-50 characters, letters only');
+                                } else {
+                                    clearError(this);
+                                }
+                                break;
+                            case 'phone':
+                                if (value && !validatePhone(value)) {
+                                    showError(this, 'Invalid phone number format');
+                                } else {
+                                    clearError(this);
+                                }
+                                break;
+                        }
+                    });
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            addRealTimeValidation();
+        });
 
         window.onclick = function(event) {
             const modal = document.getElementById('addressModal');

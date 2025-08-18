@@ -150,6 +150,13 @@ $products = $product->getAllProducts();
         <div class="settings-section">
             <h2><i class="bi bi-gear"></i> Store Settings</h2>
             
+            <?php if (isDemoAdmin()): ?>
+                <div class="demo-notice">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Demo Account Notice:</strong> <?php echo getDemoMessage(); ?>
+                </div>
+            <?php endif; ?>
+            
             <?php
             require_once "includes/Settings.php";
             $settings = new Settings($pdo);
@@ -157,7 +164,7 @@ $products = $product->getAllProducts();
             $currentShippingFee = $settings->getShippingFee();
             ?>
             
-            <form action="src/admin/process_settings.php" method="POST" class="settings-form">
+            <form action="src/admin/process_settings.php" method="POST" class="settings-form" <?php echo isDemoAdmin() ? 'style="pointer-events: none; opacity: 0.6;"' : ''; ?>>
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                 
                 <div class="form-row">
@@ -182,7 +189,7 @@ $products = $product->getAllProducts();
                     </div>
                 </div>
                 
-                <button type="submit" class="submit-btn settings-submit">
+                <button type="submit" class="submit-btn settings-submit" <?php echo isDemoAdmin() ? 'disabled title="Demo mode - editing disabled"' : ''; ?>>
                     <i class="bi bi-save"></i> Update Settings
                 </button>
             </form>
@@ -190,6 +197,13 @@ $products = $product->getAllProducts();
 
         <div class="products-list">
             <h2><i class="bi bi-box-seam"></i> Manage Products</h2>
+            
+            <?php if (isDemoAdmin()): ?>
+                <div class="demo-notice">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Demo Account Notice:</strong> <?php echo getDemoMessage(); ?>
+                </div>
+            <?php endif; ?>
             
             <?php if (empty($products)): ?>
                 <p class="no-products">No products found. Add your first product above!</p>

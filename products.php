@@ -30,16 +30,7 @@ $categories = $stmt->fetchAll();
     <?php include 'includes/header.php'; ?>
 
     <div class="container">
-        <?php if (!isset($_SESSION['user_id'])): ?>
-            <div class="demo-notice-banner">
-                <div class="demo-content">
-                    <h3><i class="bi bi-info-circle"></i> Try the Demo</h3>
-                    <p><strong>User:</strong> username: <span>user</span> password: <span>user</span></p>
-                    <p><strong>Admin:</strong> username: <span>admin</span> password: <span>admin</span></p>
-                    <a href="login" class="demo-login-btn">Login Now</a>
-                </div>
-            </div>
-        <?php endif; ?>
+
         
         <main>
             <div class="main-content">

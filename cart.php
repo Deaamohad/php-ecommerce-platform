@@ -25,6 +25,54 @@ $totalWithTaxAndShipping = $settings->calculateTotal($cartTotal);
 $defaultAddress = $userAddress->getDefaultAddress($user_id);
 $userAddresses = $userAddress->getUserAddresses($user_id);
 
+if (!isset($_SESSION['payment_method'])) {
+    $_SESSION['payment_method'] = [
+        'method' => 'cod',
+        'title' => 'Cash on Delivery',
+        'description' => 'Pay when your order arrives'
+    ];
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_payment'])) {
+    if (!validateCSRFToken($_POST['csrf_token'] ?? '')) {
+        $_SESSION['error'] = "Invalid request. Please try again.";
+        header('Location: cart');
+        exit();
+    }
+    
+    $_SESSION['payment_method'] = [
+        'method' => $_POST['payment_method'],
+        'title' => $_POST['payment_title'],
+        'description' => $_POST['payment_description']
+    ];
+    
+    // Save bank card details if bank card is selected
+    if ($_POST['payment_method'] === 'bank_card' && isset($_POST['card_number'])) {
+        $_SESSION['bank_card_details'] = [
+            'card_number' => $_POST['card_number'],
+            'expiry_date' => $_POST['expiry_date'],
+            'cvv' => $_POST['cvv'],
+            'card_holder_name' => $_POST['card_holder_name']
+        ];
+        // Clear CliQ details if switching from CliQ
+        unset($_SESSION['cliq_details']);
+    } elseif ($_POST['payment_method'] === 'cliq' && isset($_POST['cliq_username'])) {
+        // Save CliQ details if CliQ is selected
+        $_SESSION['cliq_details'] = [
+            'username' => $_POST['cliq_username']
+        ];
+        // Clear bank card details if switching from bank card
+        unset($_SESSION['bank_card_details']);
+    } else {
+        // Clear both if using other payment methods
+        unset($_SESSION['bank_card_details']);
+        unset($_SESSION['cliq_details']);
+    }
+    
+    header('Location: cart');
+    exit();
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validateCSRFToken($_POST['csrf_token'] ?? '')) {
         $_SESSION['error'] = "Invalid request. Please try again.";
@@ -92,20 +140,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <p class="subtotal">Subtotal: JOD <?php echo number_format($item['price'] * $item['quantity'], 2); ?></p>
                             
                             <div class="quantity-controls">
-                                <form method="POST" style="display: contents;">
+                                <form method="POST" style="display: contents;" id="quantityForm<?php echo $item['id']; ?>">
                                     <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                                     <input type="hidden" name="product_id" value="<?php echo $item['id']; ?>">
-                                    <input type="hidden" name="quantity" value="<?php echo max(1, $item['quantity'] - 1); ?>">
-                                    <button type="submit" name="update_quantity" class="quantity-btn">−</button>
-                                </form>
-                                
-                                <div class="quantity-display"><?php echo $item['quantity']; ?></div>
-                                
-                                <form method="POST" style="display: contents;">
-                                    <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
-                                    <input type="hidden" name="product_id" value="<?php echo $item['id']; ?>">
-                                    <input type="hidden" name="quantity" value="<?php echo $item['quantity'] + 1; ?>">
-                                    <button type="submit" name="update_quantity" class="quantity-btn">+</button>
+                                    <input type="hidden" name="update_quantity" value="1">
+                                    <div class="quantity-wrapper">
+                                        <span class="quantity-prefix">QTY:</span>
+                                        <select name="quantity" id="quantity<?php echo $item['id']; ?>" class="quantity-dropdown" onchange="this.form.submit()">
+                                            <?php for($i = 1; $i <= 15; $i++): ?>
+                                                <option value="<?php echo $i; ?>" <?php echo $item['quantity'] == $i ? 'selected' : ''; ?>><?php echo $i; ?></option>
+                                            <?php endfor; ?>
+                                        </select>
+                                    </div>
                                 </form>
                                 
                                 <form method="POST" style="display: contents;">
@@ -174,25 +220,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                         
                         <div class="address-actions-sidebar">
-                            <a href="profile?tab=addresses" class="edit-link">
-                                <i class="bi bi-plus"></i> Manage Addresses
-                            </a>
+                            <a href="profile?tab=addresses" class="edit-address-btn">Manage Addresses</a>
                         </div>
                     <?php else: ?>
                         <div class="no-address-warning">
                             <p><i class="bi bi-exclamation-triangle"></i> No shipping address added</p>
-                            <a href="profile?tab=addresses" class="add-address-link">
-                                <i class="bi bi-plus"></i> Add Address
-                            </a>
                         </div>
+                        <a href="profile?tab=addresses" class="add-address-link">Add Address</a>
                     <?php endif; ?>
                 </div>
                 
                 <div class="payment-section">
                     <h4><i class="bi bi-credit-card"></i> Payment Method</h4>
-                    <p>Visa ending in 1234</p>
-                    <p>Expires 12/25</p>
-                    <a href="#" class="edit-link">Change Payment</a>
+                    <div class="selected-payment-display">
+                        <div class="payment-content">
+                            <?php if (isset($_SESSION['payment_method']) && $_SESSION['payment_method']['method'] === 'bank_card' && isset($_SESSION['bank_card_details'])): ?>
+                                <p><strong><?= htmlspecialchars($_SESSION['payment_method']['title']) ?></strong></p>
+                                <p><?= htmlspecialchars($_SESSION['payment_method']['description']) ?></p>
+                                <p class="bank-card-details">
+                                    <small>Card ending in <?= htmlspecialchars(substr($_SESSION['bank_card_details']['card_number'], -4)) ?></small>
+                                </p>
+                            <?php elseif (isset($_SESSION['payment_method']) && $_SESSION['payment_method']['method'] === 'cliq' && isset($_SESSION['cliq_details'])): ?>
+                                <p><strong><?= htmlspecialchars($_SESSION['payment_method']['title']) ?></strong></p>
+                                <p><?= htmlspecialchars($_SESSION['payment_method']['description']) ?></p>
+                                <p class="cliq-details">
+                                    <small>To: <?= htmlspecialchars($_SESSION['cliq_details']['username']) ?></small>
+                                </p>
+                            <?php else: ?>
+                                <p><strong id="selectedPaymentMethod"><?= htmlspecialchars($_SESSION['payment_method']['title'] ?? 'Not selected') ?></strong></p>
+                                <p id="selectedPaymentDescription"><?= htmlspecialchars($_SESSION['payment_method']['description'] ?? 'Please select a payment method') ?></p>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <a class="edit-address-btn" onclick="openPaymentModal()">Change Payment</a>
                 </div>
                 
                 <div class="checkout-section">
@@ -274,88 +334,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <p><?= htmlspecialchars($displayAddress['city']) ?></p>
                             <p><?= htmlspecialchars($displayAddress['phone']) ?></p>
                         </div>
+                        <a href="profile?tab=addresses" class="edit-address-btn">Manage Addresses</a>
                         
-                        <div class="address-actions">
-                            <button type="button" class="edit-address-btn" onclick="showAddressForm()">
-                                <i class="bi bi-pencil"></i> Edit Selected Address
-                            </button>
-                            <a href="profile?tab=addresses" class="edit-address-btn">
-                                <i class="bi bi-plus"></i> Add New Address
-                            </a>
-                        </div>
+
                     <?php else: ?>
                         <div class="no-address">
                             <p class="no-address-warning"><i class="bi bi-exclamation-triangle"></i> No shipping address found</p>
-                            <a href="profile?tab=addresses" class="edit-address-btn">
-                                <i class="bi bi-plus"></i> Add Address
-                            </a>
                         </div>
+                        <a href="profile?tab=addresses" style="margin-top: 0px;" class="add-address-link">Add Address</a>
                     <?php endif; ?>
                 </div>
 
                 <div class="payment-info-modal">
                     <h3><i class="bi bi-credit-card"></i> Payment Method</h3>
                     <div class="payment-display">
-                        <p><i class="bi bi-credit-card"></i> Visa ending in 1234</p>
-                        <p>Expires 12/25</p>
+                        <?php if (isset($_SESSION['payment_method']) && $_SESSION['payment_method']['method'] === 'bank_card' && isset($_SESSION['bank_card_details'])): ?>
+                            <p><strong><?= htmlspecialchars($_SESSION['payment_method']['title']) ?></strong></p>
+                            <p><?= htmlspecialchars($_SESSION['payment_method']['description']) ?></p>
+                            <p class="bank-card-details">
+                                <small>Card ending in <?= htmlspecialchars(substr($_SESSION['bank_card_details']['card_number'], -4)) ?></small>
+                            </p>
+                        <?php elseif (isset($_SESSION['payment_method']) && $_SESSION['payment_method']['method'] === 'cliq' && isset($_SESSION['cliq_details'])): ?>
+                            <p><strong><?= htmlspecialchars($_SESSION['payment_method']['title']) ?></strong></p>
+                            <p><?= htmlspecialchars($_SESSION['payment_method']['description']) ?></p>
+                            <p class="cliq-details">
+                                <small>To: <?= htmlspecialchars($_SESSION['cliq_details']['username']) ?></small>
+                            </p>
+                        <?php else: ?>
+                            <p><strong id="modalPaymentMethod"><?= htmlspecialchars($_SESSION['payment_method']['title'] ?? 'Not selected') ?></strong></p>
+                            <p id="modalPaymentDescription"><?= htmlspecialchars($_SESSION['payment_method']['description'] ?? 'Please select a payment method') ?></p>
+                        <?php endif; ?>
                     </div>
-                    <button type="button" class="edit-payment-btn" onclick="showPaymentForm()">
-                        <i class="bi bi-pencil"></i> Change Payment
-                    </button>
-                </div>
-
-                <div id="addressForm" class="address-form-modal" style="display: none;">
-                    <h3><i class="bi bi-geo-alt"></i> <?= $defaultAddress ? 'Update' : 'Add' ?> Shipping Address</h3>
-                    <form id="addressFormElement">
-                        <div class="form-group">
-                            <label for="address_title">Address Title *</label>
-                            <input type="text" id="address_title" value="<?= $defaultAddress ? htmlspecialchars($defaultAddress['title']) : 'Home' ?>" required placeholder="Home, Work, etc.">
-                        </div>
-                        <div class="form-group">
-                            <label for="full_name">Full Name *</label>
-                            <input type="text" id="full_name" value="<?= $defaultAddress ? htmlspecialchars($defaultAddress['full_name']) : '' ?>" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="street_address">Street Address *</label>
-                            <input type="text" id="street_address" value="<?= $defaultAddress ? htmlspecialchars($defaultAddress['street_address']) : '' ?>" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="city">City *</label>
-                            <input type="text" id="city" value="<?= $defaultAddress ? htmlspecialchars($defaultAddress['city']) : '' ?>" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="address_phone">Phone Number *</label>
-                            <input type="tel" id="address_phone" value="<?= $defaultAddress ? htmlspecialchars($defaultAddress['phone']) : '' ?>" required>
-                        </div>
-                        <div class="form-actions">
-                            <button type="button" onclick="cancelAddressEdit()">Cancel</button>
-                            <button type="button" onclick="saveAddress()"><?= $defaultAddress ? 'Update' : 'Add' ?></button>
-                        </div>
-                    </form>
-                </div>
-
-                <div id="paymentForm" class="payment-form-modal" style="display: none;">
-                    <h3><i class="bi bi-credit-card"></i> Update Payment Method</h3>
-                    <form>
-                        <div class="form-group">
-                            <label for="card_number">Card Number *</label>
-                            <input type="text" id="card_number" placeholder="1234 5678 9012 3456" required>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="expiry">Expiry *</label>
-                                <input type="text" id="expiry" placeholder="MM/YY" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="cvv">CVV *</label>
-                                <input type="text" id="cvv" placeholder="123" required>
-                            </div>
-                        </div>
-                        <div class="form-actions">
-                            <button type="button" onclick="cancelPaymentEdit()">Cancel</button>
-                            <button type="button" onclick="savePayment()">Save</button>
-                        </div>
-                    </form>
+                    <a class="edit-address-btn" onclick="openPaymentModal()">Change Payment</a>
                 </div>
 
                 <form method="POST" action="#" onsubmit="return false;" class="checkout-form-modal">
@@ -418,19 +428,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         function closeCheckoutModal() {
             document.getElementById('checkoutModal').style.display = 'none';
             document.body.style.overflow = 'auto';
-            hideAllForms();
         }
 
-        function hideAllForms() {
-            document.getElementById('addressForm').style.display = 'none';
-            document.getElementById('paymentForm').style.display = 'none';
-            document.getElementById('addressSelector').style.display = 'none';
-        }
 
-        function showAddressForm() {
-            hideAllForms();
-            document.getElementById('addressForm').style.display = 'block';
-        }
 
         function updateSelectedAddress() {
             const selector = document.getElementById('selectedAddressId');
@@ -480,75 +480,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        function showPaymentForm() {
-            hideAllForms();
-            document.getElementById('paymentForm').style.display = 'block';
-        }
 
-        function cancelAddressEdit() {
-            document.getElementById('addressForm').style.display = 'none';
-        }
 
-        function cancelPaymentEdit() {
-            document.getElementById('paymentForm').style.display = 'none';
-        }
 
-        function saveAddress() {
-            const title = document.getElementById('address_title').value;
-            const fullName = document.getElementById('full_name').value;
-            const streetAddress = document.getElementById('street_address').value;
-            const city = document.getElementById('city').value;
-            const phone = document.getElementById('address_phone').value;
-            
-            if (title && fullName && streetAddress && city && phone) {
-                document.getElementById('selectedAddress').innerHTML = `
-                    <p><strong>${fullName}</strong></p>
-                    <p>${streetAddress}</p>
-                    <p>${city}</p>
-                    <p>${phone}</p>
-                `;
-                
-                document.getElementById('hiddenShippingAddress').value = `${fullName}, ${streetAddress}, ${city}, ${phone}`;
-                
-                const submitBtn = document.querySelector('.btn-primary[type="submit"]');
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Place Order ($<?= number_format($cartTotal, 2) ?>)';
-                }
-                
-                cancelAddressEdit();
-                
-                fetch('src/save_address.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        title: title,
-                        full_name: fullName,
-                        street_address: streetAddress,
-                        city: city,
-                        phone: phone,
-                        is_default: true
-                    })
-                });
-            }
-        }
-
-        function savePayment() {
-            const cardNumber = document.getElementById('card_number').value;
-            const expiry = document.getElementById('expiry').value;
-            
-            if (cardNumber && expiry) {
-                const lastFour = cardNumber.slice(-4);
-                document.querySelector('.payment-display').innerHTML = `
-                    <p><i class="bi bi-credit-card"></i> Card ending in ${lastFour}</p>
-                    <p>Expires ${expiry}</p>
-                `;
-                document.querySelector('input[name="payment_method"]').value = `Card ending in ${lastFour}`;
-                cancelPaymentEdit();
-            }
-        }
 
         window.onclick = function(event) {
             const modal = document.getElementById('checkoutModal');
@@ -562,6 +496,580 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 closeCheckoutModal();
             }
         });
+    </script>
+
+
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="bi bi-credit-card"></i> Select Payment Method</h2>
+                <span class="close" onclick="closePaymentModal()">&times;</span>
+            </div>
+            
+            <div class="modal-body">
+                <div class="payment-options">
+                    <div class="payment-option" onclick="selectPayment('cod', 'Cash on Delivery', 'Pay when your order arrives')">
+                        <div class="payment-option-icon">
+                            <i class="bi bi-cash"></i>
+                        </div>
+                        <div class="payment-option-info">
+                            <h4>Cash on Delivery</h4>
+                            <p>Pay when your order arrives</p>
+                        </div>
+                        <div class="payment-option-radio">
+                            <input type="radio" name="payment_method" value="cod" <?= ($_SESSION['payment_method']['method'] ?? 'cod') === 'cod' ? 'checked' : '' ?>>
+                        </div>
+                    </div>
+
+                    <div class="payment-option" onclick="selectPayment('bank_card', 'Bank Card', 'Pay with your debit or credit card')">
+                        <div class="payment-option-icon">
+                            <i class="bi bi-credit-card"></i>
+                        </div>
+                        <div class="payment-option-info">
+                            <h4>Bank Card</h4>
+                            <p>Pay with your debit or credit card</p>
+                        </div>
+                        <div class="payment-option-radio">
+                            <input type="radio" name="payment_method" value="bank_card" <?= ($_SESSION['payment_method']['method'] ?? 'cod') === 'bank_card' ? 'checked' : '' ?>>
+                        </div>
+                    </div>
+
+                    <div class="payment-option" onclick="selectPayment('cliq', 'CliQ', 'Instant payment via CliQ')">
+                        <div class="payment-option-icon">
+                            <i class="bi bi-phone"></i>
+                        </div>
+                        <div class="payment-option-info">
+                            <h4>CliQ</h4>
+                            <p>Instant payment via CliQ</p>
+                        </div>
+                        <div class="payment-option-radio">
+                            <input type="radio" name="payment_method" value="cliq" <?= ($_SESSION['payment_method']['method'] ?? 'cod') === 'cliq' ? 'checked' : '' ?>>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="bankCardForm" class="bank-card-form" style="display: none;">
+                    <h4>Card Details</h4>
+                    <?php if (isset($_SESSION['bank_card_details'])): ?>
+                        <p class="existing-card-notice">
+                            <i class="bi bi-info-circle"></i> 
+                            You have existing card details. You can edit them below.
+                        </p>
+                    <?php endif; ?>
+                    <div class="form-group">
+                        <label for="cardNumber">Card Number</label>
+                        <input type="text" id="cardNumber" name="card_number" maxlength="19" placeholder="1234 5678 9012 3456" oninput="formatCardNumber(this)" onblur="validateCardNumber(this)" value="<?= isset($_SESSION['bank_card_details']['card_number']) ? htmlspecialchars($_SESSION['bank_card_details']['card_number']) : '' ?>">
+                        <span class="error-message" id="cardNumberError"></span>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="expiryDate">Expiry Date</label>
+                            <input type="text" id="expiryDate" name="expiry_date" maxlength="5" placeholder="MM/YY" oninput="formatExpiryDate(this)" onblur="validateExpiryDate(this)" value="<?= isset($_SESSION['bank_card_details']['expiry_date']) ? htmlspecialchars($_SESSION['bank_card_details']['expiry_date']) : '' ?>">
+                            <span class="error-message" id="expiryDateError"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="cvv">CVV</label>
+                            <input type="text" id="cvv" name="cvv" maxlength="4" placeholder="123" oninput="formatCVV(this)" onblur="validateCVV(this)" value="<?= isset($_SESSION['bank_card_details']['cvv']) ? htmlspecialchars($_SESSION['bank_card_details']['cvv']) : '' ?>">
+                            <span class="error-message" id="cvvError"></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="cardHolderName">Card Holder Name</label>
+                        <input type="text" id="cardHolderName" name="card_holder_name" placeholder="John Doe" onblur="validateCardHolderName(this)" value="<?= isset($_SESSION['bank_card_details']['card_holder_name']) ? htmlspecialchars($_SESSION['bank_card_details']['card_holder_name']) : '' ?>">
+                        <span class="error-message" id="cardHolderNameError"></span>
+                    </div>
+                </div>
+
+                <div id="cliqForm" class="cliq-form" style="display: none;">
+                    <h4>CliQ Payment Request</h4>
+                    <div class="cliq-instructions">
+                        <p><i class="bi bi-info-circle"></i> We'll send a payment request to your CliQ account:</p>
+                        <ol>
+                            <li>Enter your CliQ username or phone number</li>
+                            <li>We'll send you a payment request</li>
+                            <li>Open your bank app and approve the payment</li>
+                            <li>Payment will be processed instantly</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cliqUsername">CliQ Username or Phone Number</label>
+                        <input type="text" id="cliqUsername" name="cliq_username" placeholder="username or 07XXXXXXXX" onblur="validateCliQUsername(this)">
+                        <span class="error-message" id="cliqUsernameError"></span>
+                    </div>
+                    
+                    <div class="cliq-amount">
+                        <label>Payment Amount:</label>
+                        <div class="amount-display">
+                            <span class="amount">JOD <?= number_format($totalWithTaxAndShipping, 2) ?></span>
+                        </div>
+                    </div>
+                    
+                    <div class="cliq-note">
+                        <p><i class="bi bi-shield-check"></i> Your payment request will be sent securely</p>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closePaymentModal()">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="confirmPaymentSelection()">
+                        Confirm Selection
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedPaymentMethod = '<?= $_SESSION['payment_method']['method'] ?? 'cod' ?>';
+        let selectedPaymentTitle = '<?= addslashes($_SESSION['payment_method']['title'] ?? 'Cash on Delivery') ?>';
+        let selectedPaymentDesc = '<?= addslashes($_SESSION['payment_method']['description'] ?? 'Pay when your order arrives') ?>';
+        
+        // Initialize bank card form visibility and visual selection
+        document.addEventListener('DOMContentLoaded', function() {
+            if (selectedPaymentMethod === 'bank_card') {
+                document.getElementById('bankCardForm').style.display = 'block';
+                document.getElementById('cliqForm').style.display = 'none';
+                
+                // Format existing bank card values if they exist
+                const cardNumber = document.getElementById('cardNumber');
+                const expiryDate = document.getElementById('expiryDate');
+                const cvv = document.getElementById('cvv');
+                
+                if (cardNumber.value && cardNumber.value.length >= 4) {
+                    formatCardNumber(cardNumber);
+                }
+                if (expiryDate.value && expiryDate.value.length >= 2) {
+                    formatExpiryDate(expiryDate);
+                }
+                if (cvv.value && cvv.value.length >= 3) {
+                    formatCVV(cvv);
+                }
+            } else if (selectedPaymentMethod === 'cliq') {
+                document.getElementById('bankCardForm').style.display = 'none';
+                document.getElementById('cliqForm').style.display = 'block';
+            }
+            
+            // Set visual selection for current payment method
+            const currentOption = document.querySelector(`.payment-option input[value="${selectedPaymentMethod}"]`);
+            if (currentOption) {
+                currentOption.closest('.payment-option').classList.add('selected');
+            }
+        });
+
+        function openPaymentModal() {
+            document.getElementById('paymentModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+            
+            // Format existing bank card values if they exist
+            if (selectedPaymentMethod === 'bank_card') {
+                const cardNumber = document.getElementById('cardNumber');
+                const expiryDate = document.getElementById('expiryDate');
+                const cvv = document.getElementById('cvv');
+                const cardHolderName = document.getElementById('cardHolderName');
+                
+                // Format card number with spaces if it exists
+                if (cardNumber.value && cardNumber.value.length >= 4) {
+                    formatCardNumber(cardNumber);
+                }
+                
+                // Format expiry date if it exists
+                if (expiryDate.value && expiryDate.value.length >= 2) {
+                    formatExpiryDate(expiryDate);
+                }
+                
+                // Format CVV if it exists
+                if (cvv.value && cvv.value.length >= 3) {
+                    formatCVV(cvv);
+                }
+            }
+        }
+
+        function closePaymentModal() {
+            document.getElementById('paymentModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        function selectPayment(method, title, description) {
+            selectedPaymentMethod = method;
+            selectedPaymentTitle = title;
+            selectedPaymentDesc = description;
+            
+            // Update radio button
+            document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
+                radio.checked = radio.value === method;
+            });
+            
+            // Update visual selection
+            document.querySelectorAll('.payment-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            
+            if (method === 'bank_card') {
+                document.getElementById('bankCardForm').style.display = 'block';
+                document.getElementById('cliqForm').style.display = 'none';
+                
+                // Format existing values if they exist
+                const cardNumber = document.getElementById('cardNumber');
+                const expiryDate = document.getElementById('expiryDate');
+                const cvv = document.getElementById('cvv');
+                
+                if (cardNumber.value && cardNumber.value.length >= 4) {
+                    formatCardNumber(cardNumber);
+                }
+                if (expiryDate.value && expiryDate.value.length >= 2) {
+                    formatExpiryDate(expiryDate);
+                }
+                if (cvv.value && cvv.value.length >= 3) {
+                    formatCVV(cvv);
+                }
+            } else if (method === 'cliq') {
+                document.getElementById('bankCardForm').style.display = 'none';
+                document.getElementById('cliqForm').style.display = 'block';
+            } else {
+                document.getElementById('bankCardForm').style.display = 'none';
+                document.getElementById('cliqForm').style.display = 'none';
+            }
+        }
+
+        function confirmPaymentSelection() {
+            if (selectedPaymentMethod === 'bank_card') {
+                const cardNumber = document.getElementById('cardNumber');
+                const expiryDate = document.getElementById('expiryDate');
+                const cvv = document.getElementById('cvv');
+                const cardHolderName = document.getElementById('cardHolderName');
+                
+                // Show error messages for empty required fields
+                if (cardNumber.value.trim() === '') {
+                    const errorElement = document.getElementById('cardNumberError');
+                    errorElement.textContent = 'Card number is required';
+                    errorElement.style.display = 'block';
+                    cardNumber.classList.add('error');
+                }
+                if (expiryDate.value.trim() === '') {
+                    const errorElement = document.getElementById('expiryDateError');
+                    errorElement.textContent = 'Expiry date is required';
+                    errorElement.style.display = 'block';
+                    expiryDate.classList.add('error');
+                }
+                if (cvv.value.trim() === '') {
+                    const errorElement = document.getElementById('cvvError');
+                    errorElement.textContent = 'CVV is required';
+                    errorElement.style.display = 'block';
+                    cvv.classList.add('error');
+                }
+                if (cardHolderName.value.trim() === '') {
+                    const errorElement = document.getElementById('cardHolderNameError');
+                    errorElement.textContent = 'Card holder name is required';
+                    errorElement.style.display = 'block';
+                    cardHolderName.classList.add('error');
+                }
+                
+                const isCardNumberValid = validateCardNumber(cardNumber);
+                const isExpiryDateValid = validateExpiryDate(expiryDate);
+                const isCVVValid = validateCVV(cvv);
+                const isCardHolderNameValid = validateCardHolderName(cardHolderName);
+                
+                if (!isCardNumberValid || !isExpiryDateValid || !isCVVValid || !isCardHolderNameValid) {
+                    return;
+                }
+            } else if (selectedPaymentMethod === 'cliq') {
+                const cliqUsername = document.getElementById('cliqUsername');
+                
+                if (cliqUsername.value.trim() === '') {
+                    const errorElement = document.getElementById('cliqUsernameError');
+                    errorElement.textContent = 'CliQ username or phone number is required';
+                    errorElement.style.display = 'block';
+                    cliqUsername.classList.add('error');
+                    return;
+                }
+                
+                const isCliQUsernameValid = validateCliQUsername(cliqUsername);
+                if (!isCliQUsernameValid) {
+                    return;
+                }
+            }
+            
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.style.display = 'none';
+            
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrf_token';
+            csrfInput.value = '<?php echo $csrf_token; ?>';
+            
+            const updateInput = document.createElement('input');
+            updateInput.type = 'hidden';
+            updateInput.name = 'update_payment';
+            updateInput.value = '1';
+            
+            const methodInput = document.createElement('input');
+            methodInput.type = 'hidden';
+            methodInput.name = 'payment_method';
+            methodInput.value = selectedPaymentMethod;
+            
+            const titleInput = document.createElement('input');
+            titleInput.type = 'hidden';
+            titleInput.name = 'payment_title';
+            titleInput.value = selectedPaymentTitle;
+            
+            const descInput = document.createElement('input');
+            descInput.type = 'hidden';
+            descInput.name = 'payment_description';
+            descInput.value = selectedPaymentDesc;
+            
+            // Add bank card details if bank card is selected
+            if (selectedPaymentMethod === 'bank_card') {
+                const cardNumberInput = document.createElement('input');
+                cardNumberInput.type = 'hidden';
+                cardNumberInput.name = 'card_number';
+                cardNumberInput.value = document.getElementById('cardNumber').value.replace(/\s/g, '');
+                
+                const expiryDateInput = document.createElement('input');
+                expiryDateInput.type = 'hidden';
+                expiryDateInput.name = 'expiry_date';
+                expiryDateInput.value = document.getElementById('expiryDate').value;
+                
+                const cvvInput = document.createElement('input');
+                cvvInput.type = 'hidden';
+                cvvInput.name = 'cvv';
+                cvvInput.value = document.getElementById('cvv').value;
+                
+                const cardHolderNameInput = document.createElement('input');
+                cardHolderNameInput.type = 'hidden';
+                cardHolderNameInput.name = 'card_holder_name';
+                cardHolderNameInput.value = document.getElementById('cardHolderName').value;
+                
+                form.appendChild(cardNumberInput);
+                form.appendChild(expiryDateInput);
+                form.appendChild(cvvInput);
+                form.appendChild(cardHolderNameInput);
+            } else if (selectedPaymentMethod === 'cliq') {
+                // Add CliQ username if CliQ is selected
+                const cliqUsernameInput = document.createElement('input');
+                cliqUsernameInput.type = 'hidden';
+                cliqUsernameInput.name = 'cliq_username';
+                cliqUsernameInput.value = document.getElementById('cliqUsername').value.trim();
+                
+                form.appendChild(cliqUsernameInput);
+            }
+            
+            form.appendChild(csrfInput);
+            form.appendChild(updateInput);
+            form.appendChild(methodInput);
+            form.appendChild(titleInput);
+            form.appendChild(descInput);
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        function formatCardNumber(input) {
+            let value = input.value.replace(/\D/g, '');
+            if (value.length > 16) value = value.slice(0, 16);
+            
+            let formatted = '';
+            for (let i = 0; i < value.length; i++) {
+                if (i > 0 && i % 4 === 0) formatted += ' ';
+                formatted += value[i];
+            }
+            
+            input.value = formatted;
+        }
+
+        function validateCardNumber(input) {
+            const value = input.value.replace(/\s/g, '');
+            const errorElement = document.getElementById('cardNumberError');
+            
+            if (value.length === 0) {
+                errorElement.textContent = '';
+                errorElement.style.display = 'none';
+                input.classList.remove('error');
+                return false;
+            } else if (value.length < 13 || value.length > 19) {
+                errorElement.textContent = 'Card number must be 13-19 digits';
+                errorElement.style.display = 'block';
+                input.classList.add('error');
+                return false;
+            } else if (!/^\d+$/.test(value)) {
+                errorElement.textContent = 'Card number must contain only digits';
+                errorElement.style.display = 'block';
+                input.classList.add('error');
+                return false;
+            } else {
+                errorElement.textContent = '';
+                errorElement.style.display = 'none';
+                input.classList.remove('error');
+                return true;
+            }
+        }
+
+        function formatExpiryDate(input) {
+            let value = input.value.replace(/\D/g, '');
+            if (value.length > 4) value = value.slice(0, 4);
+            
+            if (value.length >= 2) {
+                const month = parseInt(value.slice(0, 2));
+                if (month > 12) value = '12' + value.slice(2);
+            }
+            
+            if (value.length >= 2) {
+                value = value.slice(0, 2) + '/' + value.slice(2);
+            }
+            
+            input.value = value;
+        }
+
+        function validateExpiryDate(input) {
+            const value = input.value;
+            const errorElement = document.getElementById('expiryDateError');
+            
+            if (value.length === 0) {
+                errorElement.textContent = '';
+                errorElement.style.display = 'none';
+                input.classList.remove('error');
+                return false;
+            } else if (!/^\d{2}\/\d{2}$/.test(value)) {
+                errorElement.textContent = 'Use MM/YY format';
+                errorElement.style.display = 'block';
+                input.classList.add('error');
+                return false;
+            } else {
+                const [month, year] = value.split('/');
+                const currentDate = new Date();
+                const currentYear = currentDate.getFullYear() % 100;
+                const currentMonth = currentDate.getMonth() + 1;
+                
+                if (parseInt(month) < 1 || parseInt(month) > 12) {
+                    errorElement.textContent = 'Invalid month';
+                    errorElement.style.display = 'block';
+                    input.classList.add('error');
+                    return false;
+                } else if (parseInt(year) < currentYear || (parseInt(year) === currentYear && parseInt(month) < currentMonth)) {
+                    errorElement.textContent = 'Card has expired';
+                    errorElement.style.display = 'block';
+                    input.classList.add('error');
+                    return false;
+                } else {
+                    errorElement.textContent = '';
+                    errorElement.style.display = 'none';
+                    input.classList.remove('error');
+                    return true;
+                }
+            }
+        }
+
+        function formatCVV(input) {
+            const value = input.value.replace(/\D/g, '');
+            if (value.length > 4) value = value.slice(0, 4);
+            input.value = value;
+        }
+
+        function validateCVV(input) {
+            const value = input.value.replace(/\D/g, '');
+            if (value.length > 4) value = value.slice(0, 4);
+            
+            input.value = value;
+            const errorElement = document.getElementById('cvvError');
+            
+            if (value.length === 0) {
+                errorElement.textContent = '';
+                errorElement.style.display = 'none';
+                input.classList.remove('error');
+                return false;
+            } else if (value.length < 3 || value.length > 4) {
+                errorElement.textContent = 'CVV must be 3-4 digits';
+                errorElement.style.display = 'block';
+                input.classList.add('error');
+                return false;
+            } else if (!/^\d+$/.test(value)) {
+                errorElement.textContent = 'CVV must contain only digits';
+                errorElement.style.display = 'block';
+                input.classList.add('error');
+                return false;
+            } else {
+                errorElement.textContent = '';
+                errorElement.style.display = 'none';
+                input.classList.remove('error');
+                return true;
+            }
+        }
+
+        function validateCardHolderName(input) {
+            const value = input.value.trim();
+            const errorElement = document.getElementById('cardHolderNameError');
+            
+            if (value.length === 0) {
+                errorElement.textContent = '';
+                errorElement.style.display = 'none';
+                input.classList.remove('error');
+                return false;
+            } else if (value.length < 2) {
+                errorElement.textContent = 'Name must be at least 2 characters';
+                errorElement.style.display = 'block';
+                input.classList.add('error');
+                return false;
+            } else if (!/^[a-zA-Z\s]+$/.test(value)) {
+                errorElement.textContent = 'Name can only contain letters and spaces';
+                errorElement.style.display = 'block';
+                input.classList.add('error');
+                return false;
+            } else {
+                errorElement.textContent = '';
+                errorElement.style.display = 'none';
+                input.classList.remove('error');
+                return true;
+            }
+        }
+
+        function validateCliQUsername(input) {
+            const value = input.value.trim();
+            const errorElement = document.getElementById('cliqUsernameError');
+            
+            if (value.length === 0) {
+                errorElement.textContent = '';
+                errorElement.style.display = 'none';
+                input.classList.remove('error');
+                return true;
+            }
+            
+            // Check if it's a phone number (starts with 07 and has 10 digits)
+            if (/^07\d{8}$/.test(value)) {
+                errorElement.textContent = '';
+                errorElement.style.display = 'none';
+                input.classList.remove('error');
+                return true;
+            }
+            
+            // Check if it's a username (alphanumeric, 3-20 characters)
+            if (/^[a-zA-Z0-9_]{3,20}$/.test(value)) {
+                errorElement.textContent = '';
+                errorElement.style.display = 'none';
+                input.classList.remove('error');
+                return true;
+            }
+            
+            errorElement.textContent = 'Please enter a valid CliQ username or phone number (07XXXXXXXX)';
+            errorElement.style.display = 'block';
+            input.classList.add('error');
+            return false;
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const paymentModal = document.getElementById('paymentModal');
+            const checkoutModal = document.getElementById('checkoutModal');
+            
+            if (event.target === paymentModal) {
+                closePaymentModal();
+            } else if (event.target === checkoutModal) {
+                closeCheckoutModal();
+            }
+        }
     </script>
 </body>
 </html>
