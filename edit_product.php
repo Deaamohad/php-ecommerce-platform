@@ -103,7 +103,7 @@ $categories = $stmt->fetchAll();
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="price">Price ($)</label>
+                        <label for="price">Price (JOD)</label>
                         <input type="number" id="price" name="price" step="0.01" min="0.01" value="<?php echo $productData['price']; ?>" required>
                     </div>
                     

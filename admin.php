@@ -84,7 +84,7 @@ $products = $product->getAllProducts();
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="price">Price ($)</label>
+                        <label for="price">Price (JOD)</label>
                         <input type="number" id="price" name="price" step="0.01" min="0.01" placeholder="0.00" required>
                     </div>
                     
@@ -222,7 +222,7 @@ $products = $product->getAllProducts();
                             
                             <div class="product-info">
                                 <h3><?php echo htmlspecialchars($prod['name']); ?></h3>
-                                <p class="price">$<?php echo number_format($prod['price'], 2); ?></p>
+                                <p class="price">JOD <?php echo number_format($prod['price'], 2); ?></p>
                                 <p class="stock">Stock: <?php echo $prod['stock_quantity']; ?></p>
                                 <p class="category"><?php echo htmlspecialchars($prod['category_name'] ?? 'No Category'); ?></p>
                             </div>

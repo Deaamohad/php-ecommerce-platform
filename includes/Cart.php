@@ -8,14 +8,30 @@ class Cart {
     }
 
     public function addToCart($user_id, $product_id) {
-        $stmt = $this->pdo->prepare("SELECT * FROM shopping_cart WHERE user_id = ? AND product_id = ?");
-        $stmt->execute([$user_id, $product_id]);
-        if ($stmt->rowCount() === 0) {
-            $stmt = $this->pdo->prepare("INSERT INTO shopping_cart (user_id, product_id, quantity) VALUES (?, ?, ?)");
-            $stmt->execute([$user_id, $product_id, 1]);
+        $stockStmt = $this->pdo->prepare("SELECT stock_quantity FROM products WHERE id = ?");
+        $stockStmt->execute([$product_id]);
+        $product = $stockStmt->fetch();
+        if (!$product || intval($product['stock_quantity']) <= 0) {
+            return false;
+        }
+
+        $cartStmt = $this->pdo->prepare("SELECT quantity FROM shopping_cart WHERE user_id = ? AND product_id = ?");
+        $cartStmt->execute([$user_id, $product_id]);
+
+        if ($cartStmt->rowCount() === 0) {
+            if (1 > intval($product['stock_quantity'])) {
+                return false;
+            }
+            $insertStmt = $this->pdo->prepare("INSERT INTO shopping_cart (user_id, product_id, quantity) VALUES (?, ?, ?)");
+            return $insertStmt->execute([$user_id, $product_id, 1]);
         } else {
-            $stmt = $this->pdo->prepare("UPDATE shopping_cart SET quantity = quantity + 1 WHERE user_id = ? AND product_id = ?");
-            $stmt->execute([$user_id, $product_id]);
+            $current = $cartStmt->fetch();
+            $newQuantity = intval($current['quantity']) + 1;
+            if ($newQuantity > intval($product['stock_quantity'])) {
+                return false;
+            }
+            $updateStmt = $this->pdo->prepare("UPDATE shopping_cart SET quantity = ? WHERE user_id = ? AND product_id = ?");
+            return $updateStmt->execute([$newQuantity, $user_id, $product_id]);
         }
     }
 

@@ -92,15 +92,19 @@ class Product {
 
     public function deleteProduct($id) {
         try {
+            $this->pdo->beginTransaction();
             $product = $this->getProductById($id);
             if ($product) {
                 $this->imageUploader->deleteImage($product['image_url']);
             }
-
+            $delItems = $this->pdo->prepare("DELETE FROM order_items WHERE product_id = ?");
+            $delItems->execute([$id]);
             $stmt = $this->pdo->prepare("DELETE FROM products WHERE id = ?");
             $stmt->execute([$id]);
+            $this->pdo->commit();
             return $stmt->rowCount() > 0;
         } catch (Exception $e) {
+            $this->pdo->rollBack();
             error_log('Delete product error: ' . $e->getMessage());
             throw $e;
         }

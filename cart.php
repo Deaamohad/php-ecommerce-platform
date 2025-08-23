@@ -368,7 +368,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <a class="edit-address-btn" onclick="openPaymentModal()">Change Payment</a>
                 </div>
 
-                <form method="POST" action="#" onsubmit="return false;" class="checkout-form-modal">
+                <form method="POST" action="src/process_checkout.php" class="checkout-form-modal">
                     <?php 
                     $displayAddress = $defaultAddress ?: (!empty($userAddresses) ? $userAddresses[0] : null);
                     ?>
@@ -396,9 +396,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             Cancel
                         </button>
                         <?php if (!empty($userAddresses)): ?>
-                            <button type="button" class="btn btn-primary" disabled>
-                                <i class="bi bi-info-circle"></i> Checkout Currently Disabled
-                            </button>
+                                <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+                                <input type="hidden" name="user_id" value="<?php echo $user_id; ?>">
+                                <input type="hidden" name="address_id" value="<?php echo $displayAddress['id']; ?>">
+                                <input type="hidden" name="payment_method" value="<?php echo $_SESSION['payment_method']['method']; ?>">
+                                <input type="hidden" name="total_amount" value="<?php echo $totalWithTaxAndShipping; ?>">
+                                <button type="submit" class="btn btn-primary">Checkout</button>
                         <?php else: ?>
                             <button type="button" class="btn btn-primary" onclick="window.location.href='profile?tab=addresses'" disabled>
                                 <i class="bi bi-exclamation-triangle"></i> Add Address First

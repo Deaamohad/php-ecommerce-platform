@@ -112,20 +112,67 @@ if ($activeTab === 'addresses') {
                         </form>
                     </div>
 
-                <?php elseif ($activeTab === 'orders'): ?>
-                    <div class="tab-content">
-                        <h1><i class="bi bi-box"></i> Order History</h1>
-                        
-                        <div class="orders-list">
-                            <div class="no-orders">
-                                <i class="bi bi-box"></i>
-                                <h3>No orders yet</h3>
-                                <p>Start shopping to see your order history here!</p>
-                                <a href="products" class="shop-btn">Browse Products</a>
-                            </div>
+                    <?php elseif ($activeTab === 'orders'): ?>
+    <div class="tab-content">
+        <h1><i class="bi bi-box"></i> Order History</h1>
+        <div style="margin: -12px 0 8px 0; color: #94a3b8; font-size: 12px;">
+            Demo: order status auto-advances over time
+        </div>
+        
+        <?php
+        try {
+            $q1 = $pdo->prepare("UPDATE orders SET status = 'processing' WHERE user_id = ? AND status = 'pending' AND TIMESTAMPDIFF(SECOND, created_at, NOW()) >= 55");
+            $q1->execute([$_SESSION['user_id']]);
+            $q2 = $pdo->prepare("UPDATE orders SET status = 'shipped' WHERE user_id = ? AND status IN ('pending','processing') AND TIMESTAMPDIFF(SECOND, created_at, NOW()) >= 90");
+            $q2->execute([$_SESSION['user_id']]);
+            $q3 = $pdo->prepare("UPDATE orders SET status = 'delivered' WHERE user_id = ? AND status IN ('pending','processing','shipped') AND TIMESTAMPDIFF(SECOND, created_at, NOW()) >= 125");
+            $q3->execute([$_SESSION['user_id']]);
+        } catch (Exception $e) {}
+
+        // Get user's orders
+        $stmt = $pdo->prepare("
+            SELECT o.*, COUNT(oi.id) as item_count 
+            FROM orders o 
+            LEFT JOIN order_items oi ON o.id = oi.order_id 
+            WHERE o.user_id = ? 
+            GROUP BY o.id 
+            ORDER BY o.created_at DESC
+        ");
+        $stmt->execute([$_SESSION['user_id']]);
+        $orders = $stmt->fetchAll();
+        ?>
+        
+        <?php if (!empty($orders)): ?>
+            <div class="orders-list">
+                <?php foreach ($orders as $order): ?>
+                    <div class="order-card" id="orderCard<?= $order['id'] ?>">
+                        <div class="order-header">
+                            <h3>Order #<?= htmlspecialchars($order['order_number']) ?></h3>
+                            <span class="order-status <?= $order['status'] ?>"><?= ucfirst($order['status']) ?></span>
+                        </div>
+                        <div class="order-details">
+                            <p><strong>Date:</strong> <?= date('M j, Y', strtotime($order['created_at'])) ?></p>
+                            <p><strong>Total:</strong> JOD <?= number_format($order['total_amount'], 2) ?></p>
+                            <p><strong>Items:</strong> <?= $order['item_count'] ?> product(s)</p>
+                            <p><strong>Status:</strong> <?= ucfirst($order['status']) ?></p>
+                        </div>
+                        <div class="order-actions">
+                            <button class="btn btn-secondary" onclick="openOrderModal(<?= $order['id'] ?>)">
+                                <i class="bi bi-eye"></i> View details
+                            </button>
                         </div>
                     </div>
-
+                <?php endforeach; ?>
+            </div>
+        <?php else: ?>
+            <div class="no-orders">
+                <i class="bi bi-box"></i>
+                <h3>No orders yet</h3>
+                <p>Start shopping to see your order history here!</p>
+                <a href="products" class="shop-btn">Browse Products</a>
+            </div>
+        <?php endif; ?>
+    </div>
                 <?php elseif ($activeTab === 'addresses'): ?>
                     <div class="tab-content">
                         <h1><i class="bi bi-geo-alt"></i> Shipping Addresses</h1>
@@ -269,6 +316,145 @@ if ($activeTab === 'addresses') {
         </div>
     </main>
 
+    <div id="orderDetailsModal" class="order-modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="bi bi-receipt"></i> Order Details</h3>
+                <span class="close" onclick="closeOrderModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="order-summary-head">
+                    <div class="summary-left">
+                        <p id="orderNumber"></p>
+                        <p id="orderDate"></p>
+                        <p id="orderStatus"></p>
+                    </div>
+                    <div class="summary-right">
+                        <p id="orderTotal"></p>
+                    </div>
+                </div>
+                <div id="orderItems" class="items-list"></div>
+                <div class="shipping-payment">
+                    <div class="shipping-box">
+                        <h4><i class="bi bi-geo-alt"></i> Shipping</h4>
+                        <p id="shippingAddress"></p>
+                    </div>
+                    <div class="payment-box">
+                        <h4><i class="bi bi-credit-card"></i> Payment</h4>
+                        <p id="paymentMethod"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions" id="orderActions"></div>
+        </div>
+    </div>
+
+    <script>
+        function openOrderModal(orderId) {
+            const modal = document.getElementById('orderDetailsModal');
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+
+            fetch(`src/get_order_details.php?order_id=${orderId}`, { credentials: 'same-origin' })
+                .then(r => r.json())
+                .then(data => {
+                    if (!data || !data.success) { closeOrderModal(); return; }
+                    const o = data.order;
+                    document.getElementById('orderNumber').textContent = `Order #${o.order_number}`;
+                    document.getElementById('orderDate').textContent = `Date: ${o.created_at}`;
+                    document.getElementById('orderStatus').textContent = `Status: ${o.status}`;
+                    document.getElementById('orderTotal').textContent = `Total: JOD ${parseFloat(o.total_amount).toFixed(2)}`;
+                    document.getElementById('shippingAddress').textContent = o.shipping_address;
+                    document.getElementById('paymentMethod').textContent = o.payment_method.toUpperCase();
+
+                    const itemsWrap = document.getElementById('orderItems');
+                    itemsWrap.innerHTML = '';
+                    (o.items || []).forEach(it => {
+                        const row = document.createElement('div');
+                        row.className = 'item-row';
+                        row.innerHTML = `
+                            <div class="item-media">
+                                ${it.image_url ? `<img src="${it.image_url}" alt="${it.name}">` : `<div class=\"img-ph\"><i class=\"bi bi-image\"></i></div>`}
+                            </div>
+                            <div class="item-info">
+                                <div class="item-top">
+                                    <span class="item-name">${escapeHtml(it.name)}</span>
+                                    <span class="item-subtotal">JOD ${(it.price * it.quantity).toFixed(2)}</span>
+                                </div>
+                                <div class="item-meta">
+                                    <span class="qty">Qty: ${it.quantity}</span>
+                                    <span class="price">JOD ${parseFloat(it.price).toFixed(2)}</span>
+                                </div>
+                            </div>`;
+                        itemsWrap.appendChild(row);
+                    });
+
+                    const actions = document.getElementById('orderActions');
+                    actions.innerHTML = '';
+                    if (o.status === 'pending') {
+                        const btn = document.createElement('button');
+                        btn.className = 'btn btn-danger';
+                        btn.textContent = 'Cancel order';
+                        btn.onclick = () => cancelOrder(o.id);
+                        actions.appendChild(btn);
+                    }
+                    
+                })
+                .catch(() => { closeOrderModal(); });
+        }
+
+        function closeOrderModal() {
+            const modal = document.getElementById('orderDetailsModal');
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        function cancelOrder(orderId) {
+            if (!confirm('Cancel this order?')) return;
+            fetch('src/cancel_order.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ order_id: orderId })
+            }).then(r => r.json()).then(data => {
+                if (data && data.success) {
+                    closeOrderModal();
+                    const badge = document.querySelector(`#orderCard${orderId} .order-status`);
+                    if (badge) {
+                        badge.className = 'order-status cancelled';
+                        badge.textContent = 'Cancelled';
+                    }
+                } else {
+                    alert(data && data.error ? data.error : 'Could not cancel order');
+                }
+            }).catch(() => alert('Could not cancel order'));
+        }
+
+        
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('orderDetailsModal');
+            if (event.target === modal) {
+                closeOrderModal();
+            }
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeOrderModal();
+            }
+        });
+    </script>
     <script>
         function validateName(name) {
             const nameRegex = /^[a-zA-Z\s\u0621-\u064A]{2,50}$/;
